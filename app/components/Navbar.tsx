@@ -110,6 +110,22 @@ function Navbar() {
                 Contact
               </Link>
             </li>
+            <li>
+              <Link
+                href={"/login"}
+                className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-semibold py-1.5 px-6 rounded-lg w-full"
+              >
+                Login
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={"/signup"}
+                className="border border-gradient-to-r from-[#3F3D56] to-[#B188E3] text-[#B188E3] hover:text-[#3F3D56] font-semibold py-1.5 px-4 rounded-lg w-full"
+              >
+                SignUp
+              </Link>
+            </li>
           </ul>
         </div>
       </nav>

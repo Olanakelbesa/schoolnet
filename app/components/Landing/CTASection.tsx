@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function CTASection() {
     return (
       <section  className="bg-[#d8c3f1] py-12 px-4 text-center">
@@ -7,9 +9,9 @@ export default function CTASection() {
             Join thousands of parents and schools already using SchoolNet to connect and find the best educational
             opportunities.
           </p>
-          <button className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-bold py-3 px-10 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+          <Link href={"/login"}  className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-bold py-3 px-10 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
             Get Started Now →
-          </button>
+          </Link>
         </div>
       </section>
     )
