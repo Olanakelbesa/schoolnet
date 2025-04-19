@@ -31,7 +31,7 @@ export default function HowItWorks() {
   return (
     <div id="howitwork" className="bg-[#efeeff] px-4 py-16">
       <div className="container mx-auto">
-        <h2 className="mb-16 text-center text-3xl font-bold">How It Works</h2>
+        <h2 className="mb-10 text-center text-xl md:text-4xl font-bold">How It Works</h2>
 
         <div className="relative">
           {/* Dotted line connector */}

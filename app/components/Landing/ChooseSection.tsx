@@ -29,7 +29,7 @@ const mockData = [
 function ChooseSection() {
   return (
     <div id="about">
-      <h1 className="w-full flex justify-center pt-20 pb-10 text-3xl font-bold">
+      <h1 className="w-full flex justify-center pt-20 pb-10 text-center text-xl md:text-4xl font-bold">
         Why Choose SchoolNet?
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 px-20">
