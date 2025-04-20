@@ -16,7 +16,7 @@ function Navbar() {
     <div>
       <nav className="flex justify-between items-center px-10 py-5 w-full h-20 bg-[#efeeff] bg-opacity-10 backdrop-blur-lg backdrop-filter fixed top-0 z-10">
         <div className="flex justify-between w-full">
-          <div>
+          <Link href={"/"}>
             <Image
               src={"/logo.png"}
               alt="logo"
@@ -24,7 +24,7 @@ function Navbar() {
               height={50}
               className="mx-auto"
             />
-          </div>
+          </Link>
 
           <div className="flex gap-10 items-center hidden md:flex lg:gap-12">
             <Link
