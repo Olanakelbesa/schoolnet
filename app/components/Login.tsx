@@ -52,7 +52,7 @@ function Login() {
     if (!emailValidationResult && !passwordValidationResult) {
       
       console.log("Form submitted successfully");
-      router.push("./dashboard")
+      router.push("./clientquestionnaire");
     }
   };
 
