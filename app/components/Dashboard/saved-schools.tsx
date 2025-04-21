@@ -10,7 +10,7 @@ interface SchoolCardProps {
 
 function SchoolCard({ image, category, name, rating }: SchoolCardProps) {
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg overflow-hidden w-90 md:w-full shadow-md hover:shadow-lg transition duration-200">
       <div className="aspect-video relative">
         <Image src={image || "/placeholder.svg"} alt={name} fill className="object-cover" />
       </div>
@@ -69,7 +69,7 @@ export function SavedSchools() {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 w-90 md:w-full">
         <h2 className="text-lg font-semibold">Saved Schools</h2>
         <div className="flex gap-2">
           <button className="h-6 w-6 rounded-full border flex items-center justify-center">

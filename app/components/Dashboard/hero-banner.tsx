@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 
 export function HeroBanner() {
   return (
-    <div className="bg-purple-600 text-white p-6 rounded-lg mb-6 relative overflow-hidden">
+    <div className="bg-purple-600 w-90 md:w-full text-white p-6 rounded-lg mb-6 relative overflow-hidden">
       <div className="relative z-10">
         <h1 className="text-xl md:text-2xl font-semibold mb-4">Find the perfect school for you</h1>
         <Button variant="secondary" className="bg-gray-900 text-white hover:bg-gray-800">

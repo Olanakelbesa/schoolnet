@@ -16,7 +16,7 @@ function AnnouncementCard({
   title,
 }: AnnouncementCardProps) {
   return (
-    <div className="bg-gray-50 p-4 rounded-lg shadow-md border border-gray-100">
+    <div className="bg-gray-50 p-4 rounded-lg shadow-md border border-gray-100 w-90 md:full">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-3">
           <div className="bg-purple-100 p-2 rounded-full">{icon}</div>

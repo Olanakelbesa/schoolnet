@@ -47,7 +47,7 @@ export function TeachersSection() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">{teacher.courseType}</Badge>
+                <Badge className="hidden md:block bg-purple-100 text-purple-800 hover:bg-purple-100">{teacher.courseType}</Badge>
                 <div className="text-sm">{teacher.schoolName}</div>
                 <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">CONTACT</Badge>
               </div>

@@ -3,12 +3,14 @@ import { HeroBanner } from "./hero-banner"
 import { AnnouncementCards } from "./announcement-cards"
 import { SavedSchools } from "./saved-schools"
 import { TeachersSection } from "./teachers-section"
+import NavbarSm from "./navbar-sm"
 
 export function MainDashboard() {
   return (
     <>
+    <NavbarSm/>
       <Header />
-      <main className="flex-1  md:p-6">
+      <main className="flex-1 px-4  md:p-6">
         <HeroBanner />
         <AnnouncementCards />
         <SavedSchools />

@@ -53,7 +53,7 @@ function Navbar() {
             </Link>
           </div>
 
-          <div className="flex gap-10 items-center hidden md:flex lg:gap-4">
+          <div className=" gap-10 items-center hidden md:flex lg:gap-4">
             <Link
               href={"/login"}
               className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-semibold py-1.5 px-6 rounded-lg w-full"
