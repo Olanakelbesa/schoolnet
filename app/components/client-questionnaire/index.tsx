@@ -208,8 +208,8 @@ export default function ClientQuestionnaire() {
 
       {/* Custom Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-transparent backdrop-blur-xs bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-md text-center w-full mx-4">
+        <div className="fixed inset-0 z-50 bg-transparent backdrop-blur-xs bg-opacity-40  flex items-center justify-center">
+          <div className="bg-white rounded-xl border border-[#b188e3] shadow-lg p-6 max-w-md text-center w-full mx-4">
             <h2 className="text-2xl font-bold text-[#2e2e7b] mb-4">
               🎉 Thank You!
             </h2>
