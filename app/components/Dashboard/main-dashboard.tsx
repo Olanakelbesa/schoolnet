@@ -8,7 +8,7 @@ export function MainDashboard() {
   return (
     <>
       <Header />
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1  md:p-6">
         <HeroBanner />
         <AnnouncementCards />
         <SavedSchools />

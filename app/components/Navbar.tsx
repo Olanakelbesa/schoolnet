@@ -18,10 +18,10 @@ function Navbar() {
         <div className="flex justify-between w-full">
           <Link href={"/"}>
             <Image
-              src={"/logo.svg"}
+              src={"/schoolnet-logo.svg"}
               alt="logo"
-              width={100}
-              height={50}
+              width={150}
+              height={150}
               className="mx-auto"
             />
           </Link>

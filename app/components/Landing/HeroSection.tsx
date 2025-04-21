@@ -6,7 +6,7 @@ import { PiCompass, PiCompassRose } from "react-icons/pi"
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full overflow-hidden bg-[#efeeff] py-8 md:py-16 lg:py-20">
+    <div className="relative w-full overflow-hidden bg-[#efeeff] py-8 md:py-16 lg:py-20 lg:pl-10">
 
       <div className="container mx-auto px-10">
         <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between">
@@ -31,7 +31,7 @@ export default function HeroSection() {
 
           <div className="relative py-5">
               <Image
-                src="/image (2).svg"
+                src="/image.svg"
                 alt="Family looking for schools in Ethiopia"
                 width={400}
                 height={400}

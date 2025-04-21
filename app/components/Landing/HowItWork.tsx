@@ -7,12 +7,12 @@ function HowItWork() {
       <h1 className="text-center text-xl md:text-4xl font-bold mb-8 md:mb-16">
         How It Works
       </h1>
-      <div className="w-full lg:w-[60%] mx-auto flex flex-col gap-14 md:gap-28 pt-10 md:pt-20">
+      <div className="w-full lg:w-[60%] mx-auto flex flex-col gap-14 md:gap-28 pt-10 md:pt-10">
         {/* Step 1 */}
         <div className="relative flex flex-col justify-center items-center">
           <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-30 z-30">
             <div className="order-2 lg:order-1 text-center lg:text-left">
-              <div className="text-xl md:text-2xl font-bold flex gap-2 justify-center lg:justify-start bg-[#efeeff] py-2">
+              <div className="text-xl md:text-2xl font-bold flex gap-2 justify-center lg:justify-start bg-[#efeeff] pt-14 pb-2 ">
                 <span className="text-[#b188e3] ">#1</span>
                 <span>Sign Up</span>
               </div>

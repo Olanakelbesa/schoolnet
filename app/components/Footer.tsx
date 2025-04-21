@@ -11,14 +11,14 @@ export default function Footer() {
           <div>
           <Link href={"/"}>
             <Image
-              src={"/logo.png"}
+              src={"/schoolnet-logo.svg"}
               alt="logo"
-              width={120}
-              height={120}
-              className="py-2"
+              width={200}
+              height={200}
+              className=""
             />
           </Link>
-            <p className="text-gray-300 text-sm">
+            <p className="text-gray-300 text-sm pl-8 pr-4">
               Connecting parents and schools across Ethiopia for better educational outcomes.
             </p>
           </div>

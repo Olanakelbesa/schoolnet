@@ -3,6 +3,8 @@ import Image from "next/image";
 import React, { useState } from "react";
 import young_man from "@/public/young-man.png";
 import logo from "@/public/logo.svg";
+import young from "@/public/login-image.png";
+
 
 import {
   Apple,
@@ -61,9 +63,11 @@ function Login() {
           <h1 className="font-bold text-6xl text-white">Log In</h1>
         </div>
         <Image
-          src={young_man}
+          src={young}
           alt="young man"
           className="absolute top-30 right-10 w-80 md:w-96"
+          width={400}
+          height={400}
         />
       </div>
 
