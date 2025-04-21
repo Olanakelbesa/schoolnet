@@ -15,6 +15,7 @@ import {
 } from "@mui/icons-material";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -23,6 +24,7 @@ function Login() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter();
 
   const validateEmail = (value: string) => {
     if (!value.trim()) return "Email is required";
@@ -46,8 +48,9 @@ function Login() {
     setPasswordError(passwordValidationResult);
 
     if (!emailValidationResult && !passwordValidationResult) {
-      // Handle form submission (add API call here)
+      
       console.log("Form submitted successfully");
+      router.push("./dashboard")
     }
   };
 
@@ -91,7 +94,7 @@ function Login() {
                       setEmailError(validateEmail(e.target.value));
                   }}
                   placeholder="email@gmail.com"
-                  className={`outline-none border ${
+                  className={`outline-none border-2 border-gray-300 ${
                     emailError
                       ? "border-red-500"
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
@@ -124,7 +127,7 @@ function Login() {
                       setPasswordError(validatePassword(e.target.value));
                   }}
                   placeholder="Enter your password"
-                  className={`outline-none border ${
+                  className={`outline-none border-2 border-gray-300 ${
                     passwordError
                       ? "border-red-500"
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"

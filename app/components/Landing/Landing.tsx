@@ -5,7 +5,7 @@ import SchoolCategories from './SchoolCategories'
 import HowItWorks from './HowItWork'
 import Testimonials from './Testimonilals'
 import CTASection from './CTASection'
-import Footer from './Footer'
+import Footer from '../Footer'
 
 function Landing() {
   return (

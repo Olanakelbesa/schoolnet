@@ -38,7 +38,7 @@ function SignUp() {
     return value.length >= 8 ? "" : "Password must be at least 8 characters";
   };
 
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setIsSubmitted(true);
 
@@ -85,7 +85,7 @@ function SignUp() {
             </Link>
             <h1 className="text-4xl font-bold">
               <span className="text-[#B188E3]">Create</span>{" "}
-              <span >Account</span>
+              <span>Account</span>
             </h1>
           </div>
           <form onSubmit={handleSubmit} className="w-full">
@@ -100,10 +100,11 @@ function SignUp() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (isSubmitted) setEmailError(validateEmail(e.target.value));
+                    if (isSubmitted)
+                      setEmailError(validateEmail(e.target.value));
                   }}
                   placeholder="email@example.com"
-                  className={`outline-none border ${
+                  className={`outline-none border-2 border-gray-300 ${
                     emailError
                       ? "border-red-500"
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
@@ -128,10 +129,11 @@ function SignUp() {
                   value={phone}
                   onChange={(e) => {
                     setPhone(e.target.value);
-                    if (isSubmitted) setPhoneError(validatePhone(e.target.value));
+                    if (isSubmitted)
+                      setPhoneError(validatePhone(e.target.value));
                   }}
                   placeholder="1234567890"
-                  className={`outline-none border ${
+                  className={`outline-none border-2 border-gray-300 ${
                     phoneError
                       ? "border-red-500"
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
@@ -164,7 +166,7 @@ function SignUp() {
                       setPasswordError(validatePassword(e.target.value));
                   }}
                   placeholder="Enter your password"
-                  className={`outline-none border ${
+                  className={`outline-none border-2 border-gray-300 ${
                     passwordError
                       ? "border-red-500"
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
@@ -185,7 +187,9 @@ function SignUp() {
                 </div>
               </div>
               {isSubmitted && passwordError && (
-                <p className="text-red-500 text-sm pl-2 pt-1">{passwordError}</p>
+                <p className="text-red-500 text-sm pl-2 pt-1">
+                  {passwordError}
+                </p>
               )}
             </div>
 
@@ -199,12 +203,6 @@ function SignUp() {
               </button>
             </div>
           </form>
-
-          <div className="flex gap-2 items-center justify-center text-gray-500">
-            <span className="font-semibold text-xl">-</span>
-            <span>or</span>
-            <span className="font-semibold text-xl">-</span>
-          </div>
 
           <div>
             <p className="text-center text-gray-500 py-8">

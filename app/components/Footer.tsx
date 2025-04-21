@@ -1,4 +1,6 @@
 import { Facebook, Instagram, Twitter, MapPin } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 
 export default function Footer() {
   return (
@@ -7,10 +9,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div>
-            <div className="text-xl font-bold mb-4">
-              <span className="text-[#B188E3]">School</span>
-              <span>Net</span>
-            </div>
+          <Link href={"/"}>
+            <Image
+              src={"/logo.png"}
+              alt="logo"
+              width={120}
+              height={120}
+              className="py-2"
+            />
+          </Link>
             <p className="text-gray-300 text-sm">
               Connecting parents and schools across Ethiopia for better educational outcomes.
             </p>
@@ -96,7 +103,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-gray-700 py-4 text-center text-gray-400 text-sm">
-        © 2023 SchoolNet Ethiopia. All rights reserved.
+        © 2025 SchoolNet Ethiopia. All rights reserved.
       </div>
     </footer>
   )
