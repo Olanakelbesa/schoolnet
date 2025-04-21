@@ -2,7 +2,7 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import young_man from "@/public/signup-image.png";
-import logo from "@/public/logo.svg";
+import logo from "@/public/logo.png";
 import {
   EmailOutlined,
   PhoneAndroidOutlined,
@@ -16,9 +16,11 @@ function SignUp() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
   const [emailError, setEmailError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPwdError, setConfirmPwdError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const validateEmail = (value: string) => {
@@ -38,6 +40,11 @@ function SignUp() {
     return value.length >= 8 ? "" : "Password must be at least 8 characters";
   };
 
+  const validateConfirmPassword = (value: string, original: string) => {
+    if (!value.trim()) return "Confirm password is required";
+    return value === original ? "" : "Passwords do not match";
+  };
+
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setIsSubmitted(true);
@@ -45,13 +52,20 @@ function SignUp() {
     const emailValidation = validateEmail(email);
     const phoneValidation = validatePhone(phone);
     const passwordValidation = validatePassword(password);
+    const confirmValidation = validateConfirmPassword(confirmPwd, password);
 
     setEmailError(emailValidation);
     setPhoneError(phoneValidation);
     setPasswordError(passwordValidation);
+    setConfirmPwdError(confirmValidation);
 
-    if (!emailValidation && !phoneValidation && !passwordValidation) {
-      // Handle API submission here
+    if (
+      !emailValidation &&
+      !phoneValidation &&
+      !passwordValidation &&
+      !confirmValidation
+    ) {
+      // API call here
       console.log("Form submitted successfully");
     }
   };
@@ -78,23 +92,22 @@ function SignUp() {
           />
           <div className="absolute bottom-0 bg-gradient-to-r from-[#3F3D56] to-[#b188e3] lg:h-[80%] p-40 rounded-t-full"></div>
         </div>
+
         <div className="flex flex-col justify-center items-center w-full lg:w-1/3 h-screen">
-          <div className="hidden lg:block">
-            <Link href={"/"} className="mx-auto w-1/2 pt-8">
-              <Image src={logo} alt="logo" width={200} height={200} />
+          <div className="hidden lg:block mx-auto">
+            <Link href={"/"} className="mx-auto w-1/2 py-5 flex justify-center">
+              <Image src={logo} alt="logo" width={150} height={150} />
             </Link>
-            <h1 className="text-4xl font-bold">
-              <span className="text-[#B188E3]">Create</span>{" "}
-              <span>Account</span>
+            <h1 className="text-4xl font-bold pt-6">
+              <span className="text-[#B188E3]">Create</span> <span>Account</span>
             </h1>
           </div>
+
           <form onSubmit={handleSubmit} className="w-full">
             <div className="px-10">
-              {/* Email Input */}
+              {/* Email */}
               <div className="relative flex flex-col gap-4 mt-8 mx-auto">
-                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">
-                  Email
-                </label>
+                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">Email</label>
                 <input
                   type="text"
                   value={email}
@@ -110,20 +123,15 @@ function SignUp() {
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
                   } rounded-full px-3 py-3 pl-8`}
                 />
-                <EmailOutlined
-                  fontSize="small"
-                  className="text-gray-400 absolute top-4 left-2"
-                />
+                <EmailOutlined fontSize="small" className="text-gray-400 absolute top-4 left-2" />
               </div>
               {isSubmitted && emailError && (
-                <p className="text-red-500 text-sm pl-2 pt-1">{emailError}</p>
+                <p className="text-red-500 text-sm pl-2 ">{emailError}</p>
               )}
 
-              {/* Phone Input */}
+              {/* Phone */}
               <div className="relative flex flex-col gap-4 mt-8 mx-auto">
-                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">
-                  Phone Number
-                </label>
+                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">Phone Number</label>
                 <input
                   type="tel"
                   value={phone}
@@ -139,24 +147,16 @@ function SignUp() {
                       : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
                   } rounded-full px-3 py-3 pl-8`}
                 />
-                <PhoneAndroidOutlined
-                  fontSize="small"
-                  className="text-gray-400 absolute top-4 left-2"
-                />
+                <PhoneAndroidOutlined fontSize="small" className="text-gray-400 absolute top-4 left-2" />
               </div>
               {isSubmitted && phoneError && (
-                <p className="text-red-500 text-sm pl-2 pt-1">{phoneError}</p>
+                <p className="text-red-500 text-sm pl-2 ">{phoneError}</p>
               )}
 
-              {/* Password Input */}
+              {/* Password */}
               <div className="relative flex flex-col gap-4 mt-8 mx-auto">
-                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">
-                  Password
-                </label>
-                <LockOutlined
-                  fontSize="small"
-                  className="text-gray-400 absolute top-4 left-2"
-                />
+                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">Password</label>
+                <LockOutlined fontSize="small" className="text-gray-400 absolute top-4 left-2" />
                 <input
                   type={isPasswordVisible ? "text" : "password"}
                   value={password}
@@ -177,23 +177,52 @@ function SignUp() {
                   onClick={() => setIsPasswordVisible(!isPasswordVisible)}
                 >
                   {isPasswordVisible ? (
-                    <BsEyeSlash
-                      size={20}
-                      className="text-[#b188e3] font-bold"
-                    />
+                    <BsEyeSlash size={20} className="text-[#b188e3] font-bold" />
                   ) : (
                     <BsEye size={20} className="text-[#b188e3] font-bold" />
                   )}
                 </div>
               </div>
               {isSubmitted && passwordError && (
-                <p className="text-red-500 text-sm pl-2 pt-1">
-                  {passwordError}
-                </p>
+                <p className="text-red-500 text-sm pl-2 ">{passwordError}</p>
+              )}
+
+              {/* Confirm Password */}
+              <div className="relative flex flex-col gap-4 mt-8 mx-auto">
+                <label className="absolute left-8 -top-3 bg-white px-3 font-bold text-gray-500">Confirm</label>
+                <LockOutlined fontSize="small" className="text-gray-400 absolute top-4 left-2" />
+                <input
+                  type={isPasswordVisible ? "text" : "password"}
+                  value={confirmPwd}
+                  onChange={(e) => {
+                    setConfirmPwd(e.target.value);
+                    if (isSubmitted)
+                      setConfirmPwdError(validateConfirmPassword(e.target.value, password));
+                  }}
+                  placeholder="Confirm password"
+                  className={`outline-none border-2 border-gray-300 ${
+                    confirmPwdError
+                      ? "border-red-500"
+                      : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
+                  } rounded-full px-3 py-3 pl-8`}
+                />
+                <div
+                  className="absolute right-4 top-4 cursor-pointer"
+                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                >
+                  {isPasswordVisible ? (
+                    <BsEyeSlash size={20} className="text-[#b188e3] font-bold" />
+                  ) : (
+                    <BsEye size={20} className="text-[#b188e3] font-bold" />
+                  )}
+                </div>
+              </div>
+              {isSubmitted && confirmPwdError && (
+                <p className="text-red-500 text-sm pl-2 ">{confirmPwdError}</p>
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <div className="flex justify-center px-10 pt-8">
               <button
                 type="submit"
@@ -207,10 +236,7 @@ function SignUp() {
           <div>
             <p className="text-center text-gray-500 py-8">
               Already have an account?{" "}
-              <Link
-                href={"/login"}
-                className="text-[#B188E3] font-bold hover:underline"
-              >
+              <Link href={"/login"} className="text-[#B188E3] font-bold hover:underline">
                 Sign in
               </Link>
             </p>
