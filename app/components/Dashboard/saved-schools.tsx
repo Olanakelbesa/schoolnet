@@ -46,21 +46,21 @@ export function SavedSchools() {
   const schools = [
     {
       id: 1,
-      image: "/images/school.png",
+      image: "/school.jpg",
       category: "School Event",
       name: "Addis International School",
       rating: 4,
     },
     {
       id: 2,
-      image: "/images/school.png",
+      image: "/school1.jpg",
       category: "School Event",
       name: "Addis International School",
       rating: 4,
     },
     {
       id: 3,
-      image: "/images/school.png",
+      image: "/school2.jpg",
       category: "School Event",
       name: "Addis International School",
       rating: 4,

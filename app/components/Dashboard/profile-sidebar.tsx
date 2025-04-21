@@ -134,7 +134,7 @@ export function ProfileSidebar() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium">Your List</h3>
-            <button className="h-6 w-6 rounded-full border flex items-center justify-center">
+            <button className="h-6 w-6 rounded-full border flex items-center justify-center cursor-pointer hover:bg-gray-200 transition duration-200">
               <Plus className="h-4 w-4" />
             </button>
           </div>

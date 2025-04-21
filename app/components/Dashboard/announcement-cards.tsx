@@ -1,6 +1,5 @@
 import type React from "react";
 import { Bell, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface AnnouncementCardProps {
   icon: React.ReactNode;
@@ -16,7 +15,7 @@ function AnnouncementCard({
   title,
 }: AnnouncementCardProps) {
   return (
-    <div className="bg-gray-50 p-4 rounded-lg shadow-md border border-gray-100 w-90 md:full">
+    <div className="bg-gray-50 p-4 rounded-lg shadow-md border border-gray-100 w-90 md:w-full mt-4">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-3">
           <div className="bg-purple-100 p-2 rounded-full">{icon}</div>
