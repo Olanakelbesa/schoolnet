@@ -156,9 +156,9 @@ function Login() {
                   {passwordError}
                 </p>
               )}
-              <button className="font-bold flex justify-end py-2 cursor-pointer text-[#b188e3] hover:underline w-full">
+              <Link href={"/forgot-pwd"} className="font-bold flex justify-end py-2 cursor-pointer text-[#b188e3] hover:underline w-full">
                 Forgot Password?
-              </button>
+              </Link>
             </div>
 
             {/* Submit Button */}
@@ -171,11 +171,7 @@ function Login() {
               </button>
             </div>
           </form>
-          <div className="flex gap-2 items-center justify-center text-gray-500">
-            <span className="font-semibold text-xl">-</span>
-            <span>or</span>
-            <span className="font-semibold text-xl">-</span>
-          </div>
+          
 
           <div>
             <p className="text-center text-gray-500 py-8">

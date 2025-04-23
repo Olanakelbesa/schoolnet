@@ -83,7 +83,7 @@ function HowItWork() {
               />
             </div>
           </div>
-          <div className="hidden lg:block absolute left-24 h-[158%] border-l-2 border-b-2 boredr-t-2 w-[50%] border-dashed border-[#b188e3] rounded-l-lg z-10"></div>
+          <div className="hidden lg:block absolute left-24 h-[159%] border-l-2 border-b-2 boredr-t-2 w-[49%] border-dashed border-[#b188e3] rounded-l-lg z-10"></div>
         </div>
 
         {/* Step 4 */}
@@ -109,7 +109,7 @@ function HowItWork() {
               </div>
             </div>
           </div>
-          <div className="hidden lg:block absolute right-[37%] -top-[23.5%] border-r-2 border-t-2 w-6 rounded-tr-xl border-dashed border-[#b188e3] h-32 z-10"></div>
+          <div className="hidden lg:block absolute right-[39%] -top-[23.5%] border-r-2 border-t-2 w-6 rounded-tr-xl border-dashed border-[#b188e3] h-36 z-10"></div>
         </div>
       </div>
     </div>

@@ -29,7 +29,7 @@ export function Sidebar() {
         <div className="border-t pt-4 mt-4">
           <div className="text-xs font-semibold text-gray-500 mb-2">SETTINGS</div>
           <NavItem href="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
-          <NavItem href="/logout" icon={<LogOut className="h-5 w-5" />} label="Logout" className="text-red-500" />
+          <NavItem href="/login" icon={<LogOut className="h-5 w-5" />} label="Logout" className="text-red-500" />
         </div>
       </div>
     </div>

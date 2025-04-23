@@ -19,12 +19,14 @@ export default function Step3Component({
   setRatingsImportance,
 }: Step3Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-screen-lg mx-auto px-4 sm:px-6 md:px-8">
       <div>
-        <h2 className="text-center text-[#2e2e7b] font-medium mb-4">Tuition budget range</h2>
+        <h2 className="text-center text-[#2e2e7b] font-medium mb-4 text-lg sm:text-xl">
+          Tuition budget range
+        </h2>
         <div className="flex justify-center">
           <Select onValueChange={setSelectedPriceRange} value={selectedPriceRange}>
-            <SelectTrigger className="w-1/2 rounded-full border-2 border-[#b188e3] shadow-sm text-white">
+            <SelectTrigger className="w-full sm:w-1/2 md:w-2/3 rounded-full border-2 border-[#b188e3] shadow-sm">
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
             <SelectContent>
@@ -39,16 +41,18 @@ export default function Step3Component({
       </div>
 
       <div>
-        <h2 className="text-center text-[#2e2e7b] font-medium mb-4">
+        <h2 className="text-center text-[#2e2e7b] font-medium mb-4 text-lg sm:text-xl">
           Do you require after-school care or extended programs
         </h2>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 flex-wrap">
           {["Yes", "No"].map((option) => (
             <button
               key={option}
               onClick={() => setRequiresAfterSchool(option)}
-              className={`py-2 px-4 rounded-full border ${
-                requiresAfterSchool === option ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white" : "border-purple-200 shadow-sm"
+              className={`py-2 px-4 rounded-full border text-sm sm:text-base ${
+                requiresAfterSchool === option
+                  ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white"
+                  : "border-purple-200 shadow-sm"
               } hover:border-[#8a70d6] transition-colors`}
             >
               {option}
@@ -58,16 +62,18 @@ export default function Step3Component({
       </div>
 
       <div>
-        <h2 className="text-center text-[#2e2e7b] font-medium mb-4">
+        <h2 className="text-center text-[#2e2e7b] font-medium mb-4 text-lg sm:text-xl">
           How important are school ratings and parent reviews to you
         </h2>
-        <div className="grid grid-cols-2 gap-4 px-28">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {["Not Important", "Important", "Neutral", "Very Important"].map((option) => (
             <button
               key={option}
               onClick={() => setRatingsImportance(option)}
-              className={`py-2 px-4 rounded-full border ${
-                ratingsImportance === option ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white" : "border-purple-200 shadow-sm"
+              className={`py-2 px-4 rounded-full border text-sm sm:text-base ${
+                ratingsImportance === option
+                  ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white"
+                  : "border-purple-200 shadow-sm"
               } hover:border-[#8a70d6] transition-colors`}
             >
               {option}
