@@ -5,6 +5,28 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "#about", label: "About Us" },
+  { href: "#howitwork", label: "How It Work" },
+  { href: "/", label: "Contact" },
+];
+
+const authLinks = [
+  {
+    href: "/login",
+    label: "Login",
+    className:
+      "bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-semibold py-1.5 px-6 rounded-lg w-full transition-all duration-700 ease-in-out",
+  },
+  {
+    href: "/signup",
+    label: "SignUp",
+    className:
+      "border border-[#B188E3] hover:border-[#3F3D56] text-[#B188E3] hover:text-[#3F3D56] font-semibold py-1.5 px-4 rounded-lg w-full transition-all duration-500 ease-in-out",
+  },
+];
+
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -26,46 +48,28 @@ function Navbar() {
             />
           </Link>
 
-          <div className=" gap-10 items-center hidden md:flex lg:gap-12">
-            <Link
-              href={"/"}
-              className="hover:text-[#B188E3] focus:text-[#b188e3] focus:underline underline-offset-6 font-semibold"
-            >
-              Home
-            </Link>
-            <Link
-              href={"#about"}
-              className="hover:text-[#B188E3] focus:text-[#b188e3] focus:underline underline-offset-6 font-semibold"
-            >
-              About Us
-            </Link>
-            <Link
-              href={"#howitwork"}
-              className="hover:text-[#B188E3] focus:text-[#b188e3] focus:underline underline-offset-6 font-semibold"
-            >
-              How It Work
-            </Link>
-            <Link
-              href={"/"}
-              className="hover:text-[#B188E3] focus:text-[#b188e3] focus:underline underline-offset-6 font-semibold"
-            >
-              Contact
-            </Link>
+          <div className="gap-10 items-center hidden md:flex lg:gap-12">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="hover:text-[#B188E3] focus:text-[#b188e3] focus:underline underline-offset-6 font-semibold"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
 
-          <div className=" gap-10 items-center hidden md:flex lg:gap-4">
-            <Link
-              href={"/login"}
-              className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-semibold py-1.5 px-6 rounded-lg w-full"
-            >
-              Login
-            </Link>
-            <Link
-              href={"/signup"}
-              className="border border-[#B188E3] hover:border-[#3F3D56] text-[#B188E3] hover:text-[#3F3D56] font-semibold py-1.5 px-4 rounded-lg w-full"
-            >
-              SignUp
-            </Link>
+          <div className="gap-10 items-center hidden md:flex lg:gap-4">
+            {authLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className={link.className}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -78,54 +82,23 @@ function Navbar() {
           } absolute top-20 left-0 w-full bg-[#efeeff] shadow-md md:hidden`}
         >
           <ul className="flex flex-col items-center gap-4 py-4">
-            <li>
-              <Link
-                href={"/"}
-                className="hover:text-[#B188E3] focus:text-[#b188e3] font-semibold"
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={"#about"}
-                className="hover:text-[#B188E3] focus:text-[#b188e3] font-semibold"
-              >
-                About Us
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={"#howitwork"}
-                className="hover:text-[#B188E3] focus:text-[#b188e3] font-semibold"
-              >
-                How It Work
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={"/"}
-                className="hover:text-[#B188E3] focus:text-[#b188e3] font-semibold"
-              >
-                Contact
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={"/login"}
-                className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-semibold py-1.5 px-6 rounded-lg w-full"
-              >
-                Login
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={"/signup"}
-                className="border border-gradient-to-r from-[#3F3D56] to-[#B188E3] text-[#B188E3] hover:text-[#3F3D56] font-semibold py-1.5 px-4 rounded-lg w-full"
-              >
-                SignUp
-              </Link>
-            </li>
+            {navLinks.map((link) => (
+              <li key={link.label}>
+                <Link
+                  href={link.href}
+                  className="hover:text-[#B188E3] focus:text-[#b188e3] font-semibold"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+            {authLinks.map((link) => (
+              <li key={link.label}>
+                <Link href={link.href} className={link.className}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       </nav>
