@@ -1,19 +1,22 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
-import "./globals.css";
+
+
+import type { Metadata } from 'next';
+import { Poppins } from 'next/font/google';
+import './globals.css';
+import ReduxProvider from './Provider';
 
 const poppins = Poppins({
-  subsets: ["latin"],
-  variable: "--font-poppins",
-  display: "swap",
-  weight: [ "400", "500", "600", "700"],
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: "SchooNet",
-  description: "Discover Your Child’s Ideal School in Ethiopia",
+  title: 'SchooNet',
+  description: 'Discover Your Child’s Ideal School in Ethiopia',
   icons: {
-    icon: "/logo-white.png", 
+    icon: '/logo-white.png',
   },
 };
 
@@ -24,10 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${poppins.variable} antialiased`}
-      >
-        {children}
+      <body className={poppins.variable}>
+        <ReduxProvider>{children}</ReduxProvider>
       </body>
     </html>
   );

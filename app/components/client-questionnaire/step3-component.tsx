@@ -1,13 +1,20 @@
-"use client"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+"use client";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Step3Props {
-  selectedPriceRange: string
-  setSelectedPriceRange: (value: string) => void
-  requiresAfterSchool: string | null
-  setRequiresAfterSchool: (value: string) => void
-  ratingsImportance: string | null
-  setRatingsImportance: (value: string) => void
+  selectedPriceRange: string;
+  setSelectedPriceRange: (value: string) => void;
+  requiresAfterSchool: string | null;
+  setRequiresAfterSchool: (value: string) => void;
+  ratingsImportance: string | null;
+  setRatingsImportance: (value: string) => void;
 }
 
 export default function Step3Component({
@@ -25,7 +32,10 @@ export default function Step3Component({
           Tuition budget range
         </h2>
         <div className="flex justify-center">
-          <Select onValueChange={setSelectedPriceRange} value={selectedPriceRange}>
+          <Select
+            onValueChange={(value) => setSelectedPriceRange(value)}
+            value={selectedPriceRange}
+          >
             <SelectTrigger className="w-full sm:w-1/2 md:w-2/3 rounded-full border-2 border-[#b188e3] shadow-sm">
               <SelectValue placeholder="Price Range" />
             </SelectTrigger>
@@ -66,21 +76,23 @@ export default function Step3Component({
           How important are school ratings and parent reviews to you
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {["Not Important", "Important", "Neutral", "Very Important"].map((option) => (
-            <button
-              key={option}
-              onClick={() => setRatingsImportance(option)}
-              className={`py-2 px-4 rounded-full border text-sm sm:text-base ${
-                ratingsImportance === option
-                  ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white"
-                  : "border-purple-200 shadow-sm"
-              } hover:border-[#8a70d6] transition-colors`}
-            >
-              {option}
-            </button>
-          ))}
+          {["Not Important", "Important", "Neutral", "Very Important"].map(
+            (option) => (
+              <button
+                key={option}
+                onClick={() => setRatingsImportance(option)}
+                className={`py-2 px-4 rounded-full border text-sm sm:text-base ${
+                  ratingsImportance === option
+                    ? "border-[#8a70d6] bg-[#B188E3] shadow-sm text-white"
+                    : "border-purple-200 shadow-sm"
+                } hover:border-[#8a70d6] transition-colors`}
+              >
+                {option}
+              </button>
+            )
+          )}
         </div>
       </div>
     </div>
-  )
+  );
 }

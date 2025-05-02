@@ -12,7 +12,7 @@ export default function HeroSection() {
         <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between">
           {/* Left content */}
           <div className="mb-10 pt-16 max-w-lg lg:mb-0 lg:max-w-xl font-poppins">
-            <h1 className="mb-4 text-3xl font-bold  tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
+            <h1 className="mb-4 text-3xl font-bold leading-14 tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
               Discover Your Child's Ideal School in Ethiopia—
               <span className="text-[#5a3b82] underline">Smart</span>, <span className="text-[#5a3b82] underline">Simple</span>,{" "}
               <span className="text-[#5a3b82] underline">Verified</span>.
@@ -31,11 +31,11 @@ export default function HeroSection() {
 
           <div className="relative py-5">
               <Image
-                src="/image.svg"
+                src="/image.png"
                 alt="Family looking for schools in Ethiopia"
-                width={400}
-                height={400}
-                className="h-full w-full object-cover"
+                width={8000}
+                height={8000}
+                className="h-full w-full object-cover pr-10"
                 priority
               />
             </div>

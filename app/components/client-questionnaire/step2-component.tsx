@@ -1,15 +1,22 @@
-"use client"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+"use client";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Step2Props {
-  selectedLocation: string
-  setSelectedLocation: (value: string) => void
-  selectedFormat: string | null
-  setSelectedFormat: (value: string) => void
-  selectedLanguages: string[]
-  toggleLanguageSelection: (language: string) => void
-  selectedPrograms: string[]
-  toggleProgramSelection: (program: string) => void
+  selectedLocation: string;
+  setSelectedLocation: (value: string) => void;
+  selectedFormat: string | null;
+  setSelectedFormat: (value: string) => void;
+  selectedLanguages: string[];
+  toggleLanguageSelection: (language: string) => void;
+  selectedPrograms: string[];
+  toggleProgramSelection: (program: string) => void;
 }
 
 export default function Step2Component({
@@ -22,6 +29,8 @@ export default function Step2Component({
   selectedPrograms,
   toggleProgramSelection,
 }: Step2Props) {
+  const [otherLocation, setOtherLocation] = useState("");
+
   return (
     <div className="space-y-8 max-w-screen-lg mx-auto px-4 sm:px-6 md:px-8">
       <div>
@@ -29,7 +38,15 @@ export default function Step2Component({
           Preferred location or neighborhood
         </h2>
         <div className="flex justify-center">
-          <Select onValueChange={setSelectedLocation} value={selectedLocation}>
+          <Select
+            onValueChange={(value) => {
+              setSelectedLocation(value);
+              if (value !== "other") {
+                setOtherLocation("");
+              }
+            }}
+            value={selectedLocation}
+          >
             <SelectTrigger className="w-full sm:w-1/2 md:w-2/3 rounded-full border-2 border-[#b188e3] shadow-sm text-[#2e2e7b]">
               <SelectValue placeholder="Location" />
             </SelectTrigger>
@@ -42,6 +59,17 @@ export default function Step2Component({
             </SelectContent>
           </Select>
         </div>
+        {selectedLocation === "other" && (
+          <div className="mt-4">
+            <input
+              type="text"
+              value={otherLocation}
+              onChange={(e) => setOtherLocation(e.target.value)}
+              placeholder="Please specify your location"
+              className="w-full sm:w-1/2 md:w-2/3 mx-auto block rounded-full border-2 border-[#b188e3] shadow-sm text-[#2e2e7b] px-4 py-2"
+            />
+          </div>
+        )}
       </div>
 
       <div>
@@ -107,5 +135,5 @@ export default function Step2Component({
         </div>
       </div>
     </div>
-  )
+  );
 }
