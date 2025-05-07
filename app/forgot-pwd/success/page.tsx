@@ -1,10 +1,10 @@
-import SuccessConfirmation from '@/app/components/ForgotPwd/SuccessConfirmation'
+import PasswordSuccess from '@/app/components/ForgotPwd/password-success.tsx'
 import React from 'react'
 
 function page() {
   return (
     <div>
-        <SuccessConfirmation/>
+        <PasswordSuccess/>
     </div>
   )
 }

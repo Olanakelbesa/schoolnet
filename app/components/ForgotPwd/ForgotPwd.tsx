@@ -1,85 +1,133 @@
 "use client";
 
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
+import NotificationContainer from "../Notification";
 
-function ForgotPwd() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function PasswordResetForm() {
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [notifications, setNotifications] = useState<
+    {
+      id: number;
+      message: string;
+      type: "success" | "error" | "warning" | "info";
+    }[]
+  >([]);
 
-  interface ValidateEmail {
-    (email: string): boolean;
-  }
+  // Generate unique ID for notifications
+  const generateId = () => Math.floor(Math.random() * 1000000);
 
-  const validateEmail: ValidateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+  // Add notification with optional auto-dismiss
+  const addNotification = (
+    message: string,
+    type: "success" | "error" | "warning" | "info"
+  ) => {
+    const id = generateId();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    if (type !== "error") {
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 5000); // Auto-dismiss after 5 seconds for non-error notifications
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Remove notification
+  const removeNotification = (id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const validateEmail = (value: string) => {
+    if (!value.trim()) return "Email is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value) ? "" : "Invalid email format";
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    setIsSubmitted(true);
+    setIsSubmitting(true);
 
-    const form = e.target as HTMLFormElement;
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const emailValidationResult = validateEmail(email);
+    setEmailError(emailValidationResult);
 
-    // Client-side email validation
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email address");
-      setIsLoading(false);
-      return;
+    if (!emailValidationResult) {
+      try {
+        // Here you would typically call your API to send the reset email
+        // This is a mock implementation
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        addNotification("Reset link sent to your email", "success");
+      } catch (error) {
+        addNotification("Failed to send reset link", "error");
+      }
     }
+    setIsSubmitting(false);
+  };
 
-    router.push("/forgot-pwd/verificationcode");
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.scrollIntoView({ behavior: "auto", block: "center" });
+    window.scrollTo({ top: window.scrollY, behavior: "auto" });
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-center items-center h-screen w-full">
-      <div className="w-1/2 pl-2">
-        <h1 className="font-bold text-3xl text-[#5A3B82]">
-          Forgot your password?
-        </h1>
-        <p className="flex flex-col py-2 text-gray-500">
-          <span>Don’t worry. We’ll reset your password</span>
-          <span>and send you a link to create a new one.</span>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Notifications */}
+      <NotificationContainer
+        notifications={notifications}
+        onClose={removeNotification}
+      />
+
+      {/* Background image */}
+      <div
+        className="absolute inset-0 bg-custom-bg-image bg-cover bg-center bg-no-repeat opacity-100"
+        style={{
+          backgroundImage: "url('/images/reset-pwd-bg.png')",
+          minHeight: "100vh",
+          width: "100%",
+        }}
+      />
+      {/* Card */}
+      <div className="bg-white/90 backdrop-blur-sm p-8 border bordder-[#d5c7e6] rounded-lg z-10 mx-auto text-center py-24 px-14">
+        <h1 className="text-2xl font-bold mb-2">Reset your Password</h1>
+        <p className="text-gray-600 mb-6">
+          We will send you an email to reset your password
         </p>
-        <form className="flex gap-4 py-5" onSubmit={handleSubmit}>
-          <div className="flex flex-col w-80">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 py-8">
+          <div className="relative">
             <input
               type="email"
-              name="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (isSubmitted) setEmailError(validateEmail(e.target.value));
+              }}
+              onFocus={handleFocus}
               placeholder="Email"
-              required
-              className="border-2 border-[#B188E3] rounded-full p-2 pl-3"
-              disabled={isLoading}
+              className={`outline-none border-2 border-gray-300 w-full ${
+                emailError
+                  ? "border-red-500"
+                  : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
+              } rounded-lg p-2 pl-8`}
             />
-            {error && (
-              <p className="text-red-500 text-sm mt-2 text-left">{error}</p>
+            {isSubmitted && emailError && (
+              <p className="text-red-500 text-sm pl-2 pt-1 text-left">
+                {emailError}
+              </p>
             )}
           </div>
           <button
             type="submit"
-            className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-bold py-2 px-4 rounded-full disabled:opacity-50"
-            disabled={isLoading}
+            disabled={isSubmitting}
+            className={`bg-[#5a3b82] hover:bg-[#4a2e69] text-white p-2 rounded-md ${
+              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            {isLoading ? "Sending..." : "Reset Password"}
+            {isSubmitting ? "Sending..." : "Send"}
           </button>
         </form>
-      </div>
-      <div>
-        <Image
-          src="/forgot-password1.svg"
-          alt="Forgot Password"
-          className="text-[#5A3B82]"
-          width={400}
-          height={400}
-        />
       </div>
     </div>
   );
 }
-
-export default ForgotPwd;

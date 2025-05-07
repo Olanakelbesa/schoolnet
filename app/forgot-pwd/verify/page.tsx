@@ -1,10 +1,10 @@
-import SetPassword from '@/app/components/ForgotPwd/SetPassword'
+import OtpVerification from '@/app/components/ForgotPwd/otp-verification'
 import React from 'react'
 
 function page() {
   return (
     <div>
-        <SetPassword/>
+        <OtpVerification/>
     </div>
   )
 }

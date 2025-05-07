@@ -1,10 +1,10 @@
-import VerificationCode from '@/app/components/ForgotPwd/VerificationCode'
+import SetNewPassword from '@/app/components/ForgotPwd/set-new-password'
 import React from 'react'
 
 function page() {
   return (
     <div>
-        <VerificationCode/>
+        <SetNewPassword/>
     </div>
   )
 }
