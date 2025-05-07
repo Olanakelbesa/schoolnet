@@ -1,0 +1,204 @@
+"use client";
+
+import type React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  LogOut,
+  SidebarIcon,
+  ChevronLeft,
+  X,
+} from "lucide-react";
+import { useState } from "react";
+
+interface SidebarProps {
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  isCollapsed: boolean;
+  onToggle: () => void;
+  isMobileMenuOpen: boolean;
+  onMobileMenuClose: () => void;
+}
+
+export function Sidebar({
+  activeTab = "dashboard",
+  onTabChange,
+  isCollapsed,
+  onToggle,
+  isMobileMenuOpen,
+  onMobileMenuClose,
+}: SidebarProps) {
+  const handleTabClick = (tab: string) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+    // Close mobile menu when a tab is clicked
+    onMobileMenuClose();
+  };
+
+  return (
+    <>
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onMobileMenuClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed h-screen flex-col border-r border-dashed border-[#B188E3] bg-[#f7f3fc] p-4 transition-all duration-300 md:flex ${
+          isCollapsed ? "w-20" : "w-64"
+        } ${isMobileMenuOpen ? "left-0 flex z-50" : "-left-full md:left-0"}`}
+      >
+        <div
+          className={`flex items-center ${
+            isCollapsed ? "justify-center" : "justify-between"
+          }`}
+        >
+          {!isCollapsed && (
+            <Image
+              src="/logo.png"
+              height={60}
+              width={60}
+              alt="SchoolNet Logo"
+              className="h-10 w-20"
+            />
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onToggle}
+              className="rounded-md p-1 hover:bg-purple-100 hidden md:block"
+            >
+              <SidebarIcon
+                className={`h-5 w-5 text-[#B188E3] transition-transform duration-300 ${
+                  isCollapsed ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            <button
+              onClick={onMobileMenuClose}
+              className="rounded-md p-1 hover:bg-purple-100 md:hidden"
+            >
+              <X className="h-5 w-5 text-[#B188E3]" />
+            </button>
+          </div>
+        </div>
+        <nav className="mt-8 flex flex-1 flex-col overflow-y-auto">
+          <div className="space-y-2">
+            <NavItem
+              icon={<LayoutDashboard className="h-5 w-5" />}
+              label="Dashboard"
+              active={activeTab === "dashboard"}
+              onClick={() => handleTabClick("dashboard")}
+              href="/"
+              isCollapsed={isCollapsed}
+            />
+            <NavItem
+              icon={<Users className="h-5 w-5" />}
+              label="Profile"
+              active={activeTab === "profile"}
+              onClick={() => handleTabClick("profile")}
+              href="/profile"
+              isCollapsed={isCollapsed}
+            />
+            <NavItem
+              icon={<FileText className="h-5 w-5" />}
+              label="Posts"
+              active={activeTab === "posts"}
+              onClick={() => handleTabClick("posts")}
+              href="/posts"
+              isCollapsed={isCollapsed}
+            />
+            <NavItem
+              icon={<BarChart3 className="h-5 w-5" />}
+              label="Reports"
+              active={activeTab === "reports"}
+              onClick={() => handleTabClick("reports")}
+              href="/reports"
+              isCollapsed={isCollapsed}
+            />
+            <NavItem
+              icon={<Settings className="h-5 w-5" />}
+              label="Settings"
+              active={activeTab === "settings"}
+              onClick={() => handleTabClick("settings")}
+              href="/settings"
+              isCollapsed={isCollapsed}
+            />
+          </div>
+          <div className="mt-auto space-y-2">
+            <NavItem
+              icon={<HelpCircle className="h-5 w-5" />}
+              label="Help/Support"
+              active={activeTab === "help"}
+              onClick={() => handleTabClick("help")}
+              href="/help"
+              isCollapsed={isCollapsed}
+            />
+            <NavItem
+              icon={<LogOut className="h-5 w-5" />}
+              label="Logout"
+              active={activeTab === "logout"}
+              onClick={() => handleTabClick("logout")}
+              href="/logout"
+              isCollapsed={isCollapsed}
+            />
+          </div>
+        </nav>
+      </div>
+    </>
+  );
+}
+
+interface NavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  href: string;
+  isCollapsed: boolean;
+}
+
+function NavItem({
+  icon,
+  label,
+  active,
+  onClick,
+  href,
+  isCollapsed,
+}: NavItemProps) {
+  const isLogout = label === "Logout";
+
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm ${
+        isLogout
+          ? active
+            ? "bg-red-100 text-red-700 font-medium"
+            : "text-red-500 hover:bg-red-50"
+          : active
+          ? "bg-purple-200 text-purple-700 font-medium"
+          : "text-gray-500 hover:bg-purple-100"
+      } ${isCollapsed ? "justify-center" : ""}`}
+      onClick={(e) => {
+        if (href === "#") {
+          e.preventDefault();
+        }
+        onClick();
+      }}
+      title={isCollapsed ? label : undefined}
+    >
+      {icon}
+      {!isCollapsed && <span>{label}</span>}
+    </Link>
+  );
+}
