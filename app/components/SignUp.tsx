@@ -12,10 +12,9 @@ import {
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { signup } from "@/redux/slices/authSlice";
-import { RootState, AppDispatch } from "@/redux/store";
-import NotificationContainer from "./Notification"; // Adjust the path as needed
+import { useSession } from "next-auth/react";
+import axios from "axios";
+import NotificationContainer from "./Notification";
 
 function SignUp() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -28,6 +27,7 @@ function SignUp() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPwdError, setConfirmPwdError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<
     {
       id: number;
@@ -36,12 +36,14 @@ function SignUp() {
     }[]
   >([]);
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const {
-    loading,
-    error: reduxError,
-    verificationMessage,
-  } = useSelector((state: RootState) => state.auth);
+  const { data: session } = useSession();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (session) {
+      router.push("/clientquestionnaire");
+    }
+  }, [session, router]);
 
   // Generate unique ID for notifications
   const generateId = () => Math.floor(Math.random() * 1000000);
@@ -56,7 +58,7 @@ function SignUp() {
     if (type !== "error") {
       setTimeout(() => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 5000); // Auto-dismiss after 5 seconds for non-error notifications
+      }, 5000);
     }
   };
 
@@ -64,24 +66,6 @@ function SignUp() {
   const removeNotification = (id: number) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
-
-  // Clear verification message when the component is mounted
-  useEffect(() => {
-    dispatch({ type: "auth/clearAuth" });
-  }, [dispatch]);
-
-  // Update notifications for errors and verification message
-  useEffect(() => {
-    if (reduxError) {
-      addNotification(reduxError, "error");
-    }
-    if (verificationMessage) {
-      addNotification(verificationMessage, "info"); // Changed to 'info' for clarity
-      setTimeout(() => {
-        router.push("/verify-email"); // Redirect to email verification page
-      }, 2000); // Delay for user to read the notification
-    }
-  }, [reduxError, verificationMessage, router]);
 
   const validateEmail = (value: string) => {
     if (!value.trim()) return "Email is required";
@@ -125,14 +109,28 @@ function SignUp() {
       !passwordValidation &&
       !confirmValidation
     ) {
-      await dispatch(
-        signup({
-          email,
-          password,
-          phoneNumber: phone,
-          passwordConfirm: confirmPwd,
-        })
-      );
+      setIsLoading(true);
+      try {
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/signup`,
+          {
+            email,
+            password,
+            phoneNumber: phone,
+            passwordConfirm: confirmPwd,
+          }
+        );
+
+        addNotification("OTP has been sent to your email", "success");
+        router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+      } catch (error: any) {
+        addNotification(
+          error.response?.data?.message || "Signup failed",
+          "error"
+        );
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -228,7 +226,7 @@ function SignUp() {
                   if (isSubmitted) setPhoneError(validatePhone(e.target.value));
                 }}
                 onFocus={handleFocus}
-                placeholder="1234567890"
+                placeholder="0912345678"
                 className={`outline-none border-2 border-gray-300 ${
                   phoneError
                     ? "border-red-500"
@@ -330,12 +328,12 @@ function SignUp() {
             <div className="flex justify-center pt-8">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className={`bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-bold py-3 px-10 rounded-full w-full ${
-                  loading ? "opacity-50 cursor-not-allowed" : ""
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {loading ? "Creating Account..." : "Create Account"}
+                {isLoading ? "Creating Account..." : "Create Account"}
               </button>
             </div>
           </form>

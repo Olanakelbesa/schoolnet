@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { LockOutlined } from "@mui/icons-material";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import NotificationContainer from "../Notification";
+import { resetPassword } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
 
 export default function SetNewPassword() {
+  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -68,10 +71,12 @@ export default function SetNewPassword() {
     if (!passwordValidation && !confirmValidation) {
       setIsSubmitting(true);
       try {
-        // Here you would typically call your API to set the new password
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await resetPassword({
+          email: "example@gmail.com",
+          newPassword: password,
+        });
         addNotification("Password updated successfully", "success");
-        // Redirect or show success message
+        router.push("/forgot-pwd/success"); // Use router for navigation
       } catch (error) {
         addNotification(
           "Failed to set new password. Please try again.",

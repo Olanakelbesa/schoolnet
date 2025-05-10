@@ -16,6 +16,8 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   activeTab?: string;
@@ -34,6 +36,8 @@ export function Sidebar({
   isMobileMenuOpen,
   onMobileMenuClose,
 }: SidebarProps) {
+  const router = useRouter();
+
   const handleTabClick = (tab: string) => {
     if (onTabChange) {
       onTabChange(tab);
@@ -42,12 +46,24 @@ export function Sidebar({
     onMobileMenuClose();
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        redirect: false,
+        callbackUrl: "/login",
+      });
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <>
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={onMobileMenuClose}
         />
       )}
@@ -75,7 +91,7 @@ export function Sidebar({
           <div className="flex items-center gap-2">
             <button
               onClick={onToggle}
-              className="rounded-md p-1 hover:bg-purple-100 hidden md:block"
+              className="rounded-md p-1 hover:bg-purple-100 hidden lg:block"
             >
               <SidebarIcon
                 className={`h-5 w-5 text-[#B188E3] transition-transform duration-300 ${
@@ -85,7 +101,7 @@ export function Sidebar({
             </button>
             <button
               onClick={onMobileMenuClose}
-              className="rounded-md p-1 hover:bg-purple-100 md:hidden"
+              className="rounded-md p-1 hover:bg-purple-100 lg:hidden"
             >
               <X className="h-5 w-5 text-[#B188E3]" />
             </button>
@@ -98,7 +114,7 @@ export function Sidebar({
               label="Dashboard"
               active={activeTab === "dashboard"}
               onClick={() => handleTabClick("dashboard")}
-              href="/"
+              href="/school-dashboard"
               isCollapsed={isCollapsed}
             />
             <NavItem
@@ -106,7 +122,7 @@ export function Sidebar({
               label="Profile"
               active={activeTab === "profile"}
               onClick={() => handleTabClick("profile")}
-              href="/profile"
+              href="/school-dashboard/profile"
               isCollapsed={isCollapsed}
             />
             <NavItem
@@ -147,8 +163,8 @@ export function Sidebar({
               icon={<LogOut className="h-5 w-5" />}
               label="Logout"
               active={activeTab === "logout"}
-              onClick={() => handleTabClick("logout")}
-              href="/logout"
+              onClick={handleLogout}
+              href="#"
               isCollapsed={isCollapsed}
             />
           </div>

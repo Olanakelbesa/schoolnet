@@ -1,10 +1,10 @@
+import SchoolProfile from '@/app/components/School-profile/SchoolProfile'
 import React from 'react'
-import OtpVerification from '../components/ForgotPwd/otp-verification'
 
 function page() {
   return (
     <div>
-        <OtpVerification/>
+        <SchoolProfile/>
     </div>
   )
 }

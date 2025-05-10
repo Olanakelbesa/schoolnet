@@ -1,24 +1,85 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { MailOpenIcon as Envelope } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  verifyOtp,
+  signup,
+  setLoading,
+  setError,
+  setVerificationMessage,
+  setOtpSent,
+} from "@/redux/slices/authSlice";
+import { RootState, AppDispatch } from "@/redux/store";
+import NotificationContainer from "./Notification";
 import Image from "next/image";
-import { verifyForgotResetOtp } from "@/redux/slices/authSlice";
-import { useRouter } from "next/navigation";
 
-export default function OtpVerification() {
+function VerifyOtp() {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notifications, setNotifications] = useState<
+    {
+      id: number;
+      message: string;
+      type: "success" | "error" | "warning" | "info";
+    }[]
+  >([]);
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email");
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error: reduxError } = useSelector(
+    (state: RootState) => state.auth
+  );
 
   // Initialize refs array
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 6);
   }, []);
+
+  // Generate unique ID for notifications
+  const generateId = () => Math.floor(Math.random() * 1000000);
+
+  // Add notification with optional auto-dismiss
+  const addNotification = (
+    message: string,
+    type: "success" | "error" | "warning" | "info"
+  ) => {
+    const id = generateId();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    if (type !== "error") {
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 5000);
+    }
+  };
+
+  // Remove notification
+  const removeNotification = (id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  // Update notifications for errors
+  useEffect(() => {
+    if (reduxError) {
+      addNotification(reduxError, "error");
+    }
+  }, [reduxError]);
+
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown > 0 && !canResend) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCanResend(true);
+    }
+  }, [countdown, canResend]);
 
   const handleChange = (index: number, value: string) => {
     // Only allow numbers
@@ -63,35 +124,60 @@ export default function OtpVerification() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    if (!email) {
+      addNotification("Email not found", "error");
+      return;
+    }
+
+    dispatch(setLoading(true));
     try {
-      await verifyForgotResetOtp({
-        email: "example@gmail.com",
-        otp: otp.join(""),
-      });
-      console.log("OTP verified successfully");
-      router.push("/forgot-pwd/set-pwd"); // Use router for navigation
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
+      const result = await verifyOtp({ email, otp: otp.join("") });
+      dispatch(setVerificationMessage(result.message));
+      addNotification(result.message, "success");
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error: any) {
+      dispatch(setError(error.message));
+      addNotification(error.message, "error");
     } finally {
+      dispatch(setLoading(false));
       setIsSubmitting(false);
     }
   };
 
-  const handleResend = async () => {
+  const handleResendOtp = async () => {
+    if (!email) {
+      addNotification("Email not found", "error");
+      return;
+    }
+
+    dispatch(setLoading(true));
     try {
-      // Here you would call your API to resend the OTP
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("OTP Resent");
-      // Show success message
-    } catch (error) {
-      console.error("Error resending OTP:", error);
+      // Call signup endpoint to resend OTP
+      const result = await signup({
+        email,
+        password: "", // These fields are required by the API but not used for resending OTP
+        phoneNumber: "",
+        passwordConfirm: "",
+      });
+
+      dispatch(setOtpSent(true));
+      setCountdown(60);
+      setCanResend(false);
+      addNotification("New OTP has been sent to your email", "success");
+    } catch (error: any) {
+      dispatch(setError(error.message));
+      addNotification(error.message, "error");
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
   return (
     <div className="flex min-h-screen">
       {/* Left side - Purple background with OTP text */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-tr from-[#B188E3] to-[#3F3D56]  relative overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-tr from-[#B188E3] to-[#3F3D56] relative overflow-hidden">
         {/* Large circle shapes */}
         <div className="absolute -top-10 right-12 w-64 h-60 rounded-full bg-purple-400 opacity-20 -translate-y-1/4 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-64 h-60 rounded-full bg-purple-400 opacity-20 translate-y-1/4 -translate-x-1/4"></div>
@@ -105,6 +191,11 @@ export default function OtpVerification() {
       {/* Right side - OTP verification form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="max-w-md w-full space-y-8">
+          <NotificationContainer
+            notifications={notifications}
+            onClose={removeNotification}
+          />
+
           {/* Envelope icon */}
           <div className="flex justify-center">
             <Image
@@ -120,8 +211,7 @@ export default function OtpVerification() {
               Enter your code
             </h2>
             <p className="mt-2 text-gray-600">
-              We sent a code to{" "}
-              <span className="font-medium">example@gmail.com</span>
+              We sent a code to <span className="font-medium">{email}</span>
             </p>
           </div>
 
@@ -151,25 +241,33 @@ export default function OtpVerification() {
             <div className="text-center mb-6">
               <p className="text-sm text-gray-600">
                 Don't receive the email?{" "}
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  className="text-purple-600 hover:underline font-medium"
-                >
-                  Click to resend
-                </button>
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className="text-purple-600 hover:underline font-medium"
+                  >
+                    Click to resend
+                  </button>
+                ) : (
+                  <span className="text-gray-400">Resend in {countdown}s</span>
+                )}
               </p>
             </div>
 
             {/* Continue button */}
             <div className="w-full flex justify-center">
-              <Button
+              <button
                 type="submit"
-                className="w-2/3 h-12 bg-gradient-to-r from-[#B188E3] to-[#3F3D56] hover:from-[#3F3D56] hover:to-[#B188E3] text-white rounded-full"
                 disabled={isSubmitting || otp.some((digit) => digit === "")}
+                className={`w-2/3 h-12 bg-gradient-to-r from-[#B188E3] to-[#3F3D56] hover:from-[#3F3D56] hover:to-[#B188E3] text-white rounded-full ${
+                  isSubmitting || otp.some((digit) => digit === "")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
                 {isSubmitting ? "Verifying..." : "Continue"}
-              </Button>
+              </button>
             </div>
           </form>
         </div>
@@ -177,3 +275,5 @@ export default function OtpVerification() {
     </div>
   );
 }
+
+export default VerifyOtp;

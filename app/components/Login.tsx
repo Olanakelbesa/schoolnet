@@ -1,44 +1,56 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import React, { useState, useEffect } from 'react';
-import young_man from '@/public/young-man.png';
-import logo from '@/public/logo.svg';
-import young from '@/public/login-image.png';
-import { EmailOutlined, LockOutlined } from '@mui/icons-material';
-import { BsEye, BsEyeSlash } from 'react-icons/bs';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
-import { login } from '@/redux/slices/authSlice';
-import { RootState, AppDispatch } from '@/redux/store';
-import NotificationContainer from './Notification'; 
+import Image from "next/image";
+import React, { useState, useEffect } from "react";
+import young_man from "@/public/young-man.png";
+import logo from "@/public/logo.svg";
+import young from "@/public/login-image.png";
+import { EmailOutlined, LockOutlined } from "@mui/icons-material";
+import { BsEye, BsEyeSlash } from "react-icons/bs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import NotificationContainer from "./Notification";
 
 function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<
-    { id: number; message: string; type: 'success' | 'error' | 'warning' | 'info' }[]
+    {
+      id: number;
+      message: string;
+      type: "success" | "error" | "warning" | "info";
+    }[]
   >([]);
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const { loading, error: reduxError } = useSelector((state: RootState) => state.auth);
+  const { data: session } = useSession();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (session) {
+      router.push("/clientquestionnaire");
+    }
+  }, [session, router]);
 
   // Generate unique ID for notifications
   const generateId = () => Math.floor(Math.random() * 1000000);
 
   // Add notification with optional auto-dismiss
-  const addNotification = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+  const addNotification = (
+    message: string,
+    type: "success" | "error" | "warning" | "info"
+  ) => {
     const id = generateId();
     setNotifications((prev) => [...prev, { id, message, type }]);
-    if (type !== 'error') {
+    if (type !== "error") {
       setTimeout(() => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 5000); // Auto-dismiss after 5 seconds for non-error notifications
+      }, 5000);
     }
   };
 
@@ -47,22 +59,15 @@ function Login() {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  // Update backend error notifications
-  useEffect(() => {
-    if (reduxError) {
-      addNotification(reduxError, 'error');
-    }
-  }, [reduxError]);
-
   const validateEmail = (value: string) => {
-    if (!value.trim()) return 'Email is required';
+    if (!value.trim()) return "Email is required";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value) ? '' : 'Invalid email format';
+    return emailRegex.test(value) ? "" : "Invalid email format";
   };
 
   const validatePassword = (value: string) => {
-    if (!value.trim()) return 'Password is required';
-    return value.length >= 8 ? '' : 'Password must be at least 8 characters';
+    if (!value.trim()) return "Password is required";
+    return value.length >= 8 ? "" : "Password must be at least 8 characters";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,25 +81,40 @@ function Login() {
     setPasswordError(passwordValidationResult);
 
     if (!emailValidationResult && !passwordValidationResult) {
-      const result = await dispatch(login({ email, password }));
-      if (login.fulfilled.match(result)) {
-        addNotification('Login successful!', 'success');
-        setTimeout(() => {
-          router.push('./clientquestionnaire');
-        }, 2000); // Delay redirect to show success notification
+      setIsLoading(true);
+      try {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          addNotification(result.error, "error");
+        } else if (result?.ok) {
+          addNotification("Login successful!", "success");
+          router.push("/clientquestionnaire");
+        }
+      } catch (error: any) {
+        addNotification(error.message, "error");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.scrollIntoView({ behavior: 'auto', block: 'center' });
-    window.scrollTo({ top: window.scrollY, behavior: 'auto' });
+    e.target.scrollIntoView({ behavior: "auto", block: "center" });
+    window.scrollTo({ top: window.scrollY, behavior: "auto" });
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Notifications */}
-      <NotificationContainer notifications={notifications} onClose={removeNotification} />
+      <NotificationContainer
+        notifications={notifications}
+        onClose={removeNotification}
+      />
 
       <div className="relative block lg:hidden">
         <div className="bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] relative w-full h-96 rounded-b-full flex justify-center items-center">
@@ -112,7 +132,7 @@ function Login() {
       <div className="flex gap-40 justify-center lg:items-center flex-1">
         <div className="flex flex-col justify-center items-center w-full lg:w-1/3 min-h-[600px] lg:min-h-screen">
           <div className="hidden lg:block">
-            <Link href={'/'} className="mx-auto w-1/2 pt-8">
+            <Link href={"/"} className="mx-auto w-1/2 pt-8">
               <Image src={logo} alt="logo" width={200} height={200} />
             </Link>
             <h1 className="text-4xl font-bold">
@@ -137,8 +157,8 @@ function Login() {
                 placeholder="email@gmail.com"
                 className={`outline-none border-2 border-gray-300 ${
                   emailError
-                    ? 'border-red-500'
-                    : 'focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]'
+                    ? "border-red-500"
+                    : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
                 } rounded-full px-3 py-3 pl-8`}
               />
               <EmailOutlined
@@ -160,18 +180,19 @@ function Login() {
                 className="text-gray-400 absolute top-4 left-2"
               />
               <input
-                type={isPasswordVisible ? 'text' : 'password'}
+                type={isPasswordVisible ? "text" : "password"}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (isSubmitted) setPasswordError(validatePassword(e.target.value));
+                  if (isSubmitted)
+                    setPasswordError(validatePassword(e.target.value));
                 }}
                 onFocus={handleFocus}
                 placeholder="Enter your password"
                 className={`outline-none border-2 border-gray-300 ${
                   passwordError
-                    ? 'border-red-500'
-                    : 'focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]'
+                    ? "border-red-500"
+                    : "focus:border-[#B188E3] focus:border-2 focus:shadow-lg focus:shadow-[#efe7f9]"
                 } rounded-full px-3 py-3 pl-8`}
               />
               <div
@@ -189,7 +210,7 @@ function Login() {
               <p className="text-red-500 text-sm pl-2 pt-1">{passwordError}</p>
             )}
             <Link
-              href={'/forgot-pwd'}
+              href={"/forgot-pwd"}
               className="font-bold flex justify-end py-2 cursor-pointer text-[#b188e3] hover:underline w-full"
             >
               Forgot Password?
@@ -199,20 +220,23 @@ function Login() {
             <div className="flex justify-center pt-8">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className={`bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white font-bold py-3 px-10 rounded-full w-full ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </div>
           </form>
 
           <div>
             <p className="text-center text-gray-500 py-8">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-[#B188E3] font-bold hover:underline">
+              Don't have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-[#B188E3] font-bold hover:underline"
+              >
                 Sign up
               </Link>
             </p>
