@@ -8,6 +8,7 @@ interface User {
   id: string;
   email: string;
   phone?: string;
+  role?: string;
 }
 
 // Define the auth state interface
@@ -19,6 +20,7 @@ interface AuthState {
   verificationMessage: string | null;
   otpSent: boolean;
   token: string | null;
+  passwordResetToken: string | null;
 }
 
 // Initial state
@@ -30,6 +32,7 @@ const initialState: AuthState = {
   verificationMessage: null,
   otpSent: false,
   token: null,
+  passwordResetToken: null,
 };
 
 const authSlice = createSlice({
@@ -61,6 +64,11 @@ const authSlice = createSlice({
     },
     setOtpSent: (state, action: PayloadAction<boolean>) => {
       state.otpSent = action.payload;
+    },
+    updateUserRole: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.role = action.payload;
+      }
     },
   },
 });
@@ -101,11 +109,8 @@ export const signup = async (userData: {
 
 // Async thunk for verifying OTP
 export const verifyOtp = async (data: { email: string; otp: string }) => {
-  console.log("email: ", data);
   try {
     const response = await api.patch('/users/verifyEmail', data);
-
-    console.log("otp response: ", response);
     return response.data;
   } catch (error: any) {
     console.error('OTP verification error:', error.response?.data || error.message);
@@ -121,7 +126,6 @@ export const verifyOtp = async (data: { email: string; otp: string }) => {
 export const forgotPassword = async (email: string) => {
   try {
     const response = await api.post('/users/forgotPassword', { email });
-    console.log("Forgot password response: ", response);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Forgot password request failed');
@@ -132,7 +136,6 @@ export const forgotPassword = async (email: string) => {
 export const verifyForgotResetOtp = async (data: { email: string; otp: string }) => {
   try {
     const response = await api.patch('/users/verifyForgotResetOtp', data);
-    console.log("Verify forgot reset OTP response: ", response);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'OTP verification for password reset failed');
@@ -140,13 +143,48 @@ export const verifyForgotResetOtp = async (data: { email: string; otp: string })
 };
 
 // Async thunk for resetting password
-export const resetPassword = async (data: { email: string; newPassword: string }) => {
+export const resetPassword = async (data: { email: string; newPassword: string; passwordConfirm: string }) => {
   try {
-    const response = await api.patch('/users/resetPassword', data);
-    console.log("Reset password response: ", response);
+    const passwordResetToken = localStorage.getItem('passwordResetToken');
+    
+    if (!passwordResetToken) {
+      throw new Error('Password reset token not found');
+    }
+
+    const requestData = {
+      passwordResetToken,
+      password: data.newPassword,
+      passwordConfirm: data.passwordConfirm
+    };
+    console.log("Sending reset password request with data:", requestData);
+
+    const response = await api.patch('/users/resetPassword', requestData);
+    console.log("Reset password response:", response);
+    
+    // Clear the password reset token after successful reset
+    localStorage.removeItem('passwordResetToken');
     return response.data;
   } catch (error: any) {
+    console.error("Reset password error:", error);
     throw new Error(error.response?.data?.message || 'Password reset failed');
+  }
+};
+
+// Async thunk for updating user role
+export const updateRole = async (role: string, token: string) => {
+  try {
+    const response = await api.patch('/users/updateRole', 
+      { role },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update role');
   }
 };
 
@@ -156,7 +194,8 @@ export const {
   setLoading,
   setError,
   setVerificationMessage,
-  setOtpSent
+  setOtpSent,
+  updateUserRole
 } = authSlice.actions;
 
 export default authSlice.reducer;

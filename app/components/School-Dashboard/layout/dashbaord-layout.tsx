@@ -34,11 +34,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content Area with Fixed Navbar */}
       <div
         className={`flex min-h-screen flex-col transition-all duration-300 ${
-          isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+          isSidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
         }`}
       >
         {/* Fixed Navbar */}
-        <div className="fixed top-0 right-0 z-10 w-full md:w-[calc(100%-16rem)] transition-all duration-300">
+        <div className="fixed top-0 right-0 z-10 w-full lg:w-[calc(100%-16rem)] transition-all duration-300">
           <Navbar
             userName="Dandi Boru Academy Admin"
             userRole="Admin"
@@ -47,7 +47,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Scrollable Main Content */}
-        <main className="mt-16 flex-1 p-6">{children}</main>
+        <main className="mt-16 flex-1 p-4 lg:p-6">{children}</main>
       </div>
     </div>
   );

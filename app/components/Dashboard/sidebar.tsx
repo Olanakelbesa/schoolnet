@@ -44,7 +44,7 @@ export function Sidebar() {
             label="Inbox"
           />
           <NavItem
-            href="/dashboard"
+            href="/dashboard/my-list"
             icon={<List className="h-5 w-5" />}
             label="My List"
           />
@@ -96,7 +96,7 @@ function NavItem({
       } ${className}`}
     >
       <div
-        className={`h-6 w-6 ${active ? "text-purple-600" : "text-gray-500"}`}
+        className={`h-6 w-6 ${active ? "text-[#856cad]" : "text-gray-500"}`}
       >
         {icon}
       </div>

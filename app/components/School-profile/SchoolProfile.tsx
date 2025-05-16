@@ -374,13 +374,13 @@ export default function SchoolProfile() {
 
         <Tabs defaultValue={activeTab} className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 bg-purple-100 ">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-[#9274bd] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger value="basic" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
               Basic Info
             </TabsTrigger>
-            <TabsTrigger value="contact" className="data-[state=active]:bg-[#9274bd] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger value="contact" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
               Contact Info
             </TabsTrigger>
-            <TabsTrigger value="programs" className="data-[state=active]:bg-[#9274bd] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger value="programs" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
               Programs & Facilities
             </TabsTrigger>
           </TabsList>

@@ -41,7 +41,7 @@ function SignUp() {
   // Redirect if already authenticated
   useEffect(() => {
     if (session) {
-      router.push("/clientquestionnaire");
+      router.push("/login");
     }
   }, [session, router]);
 

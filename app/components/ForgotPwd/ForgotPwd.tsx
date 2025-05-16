@@ -58,7 +58,9 @@ export default function PasswordResetForm() {
 
     if (!emailValidationResult) {
       try {
-        await forgotPassword(email);
+        const response = await forgotPassword(email);
+        // Store email in localStorage for subsequent steps
+        localStorage.setItem("resetEmail", email);
         addNotification("Reset link sent to your email", "success");
         router.push("/forgot-pwd/verify"); // Use router for navigation
       } catch (error: any) {

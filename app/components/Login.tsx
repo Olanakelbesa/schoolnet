@@ -28,12 +28,31 @@ function Login() {
     }[]
   >([]);
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (session) {
-      router.push("/clientquestionnaire");
+    console.log("Session state changed:", session);
+    if (session?.user) {
+      console.log("User session details:", {
+        id: session.user.id,
+        email: session.user.email,
+        role: session.user.role,
+      });
+
+      // If user has no role or is a new user, redirect to role selection
+      if (!session.user.role || session.user.role === "user") {
+        console.log("User needs role selection, redirecting...");
+        router.push("/role-selection");
+      } else {
+        // If user already has a role, redirect to appropriate dashboard
+        console.log("User has role, redirecting to dashboard...");
+        if (session.user.role === "parent") {
+          router.push("/dashboard");
+        } else if (session.user.role === "school") {
+          router.push("/school-dashboard");
+        }
+      }
     }
   }, [session, router]);
 
@@ -83,19 +102,39 @@ function Login() {
     if (!emailValidationResult && !passwordValidationResult) {
       setIsLoading(true);
       try {
+        console.log("Attempting to sign in...");
         const result = await signIn("credentials", {
           email,
           password,
           redirect: false,
+          callbackUrl: "/role-selection",
         });
+        console.log("Sign in result:", result);
 
         if (result?.error) {
+          console.log("Login error:", result.error);
           addNotification(result.error, "error");
         } else if (result?.ok) {
+          console.log("Login successful, current session:", session);
           addNotification("Login successful!", "success");
-          router.push("/clientquestionnaire");
+
+          // Force a session update and wait for it
+          const updatedSession = await update();
+          console.log("Updated session:", updatedSession);
+
+          if (updatedSession?.user?.accessToken) {
+            console.log("Session updated successfully, redirecting...");
+            router.push("/role-selection");
+          } else {
+            console.error("Session update failed:", updatedSession);
+            addNotification(
+              "Login successful but session not set. Please try again.",
+              "error"
+            );
+          }
         }
       } catch (error: any) {
+        console.error("Login error:", error);
         addNotification(error.message, "error");
       } finally {
         setIsLoading(false);
