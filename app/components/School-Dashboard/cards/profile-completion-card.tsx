@@ -16,8 +16,8 @@ export function ProfileCompletionCard({ percentage, onCompleteProfile }: Profile
       
       <div className="w-full flex justify-between pr-8">
       <CardHeader className="pb-2">
-        <CardDescription className="text-sm text-purple-400">Profile</CardDescription>
-        <CardTitle className="text-lg text-purple-700">Completion</CardTitle>
+        <CardDescription className="text-sm text-[#5a3b82]">Profile</CardDescription>
+        <CardTitle className="text-lg text-[#5a3b82]">Completion</CardTitle>
       </CardHeader>
         <div className="bg-[#B188E3]/10 rounded-full p-2 w-10 h-10 flex justify-center items-center ">
           <CheckOutlined className="text-[#B188E3]" />

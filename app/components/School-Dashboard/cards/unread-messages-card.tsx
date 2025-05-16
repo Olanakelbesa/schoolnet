@@ -15,8 +15,8 @@ export function UnreadMessagesCard({ count, onViewInbox }: UnreadMessagesCardPro
       
       <div className="w-full flex justify-between pr-8">
       <CardHeader className="pb-2 w-full">
-        <CardDescription className="text-sm text-purple-400">Messages</CardDescription>
-        <CardTitle className="text-lg text-purple-700">Unread Messages</CardTitle>
+        <CardDescription className="text-sm text-[#5a3b82]">Messages</CardDescription>
+        <CardTitle className="text-lg text-[#5a3b82]">Unread Messages</CardTitle>
       </CardHeader>
         <div className="bg-[#B188E3]/10 rounded-full p-2 w-10 h-10 flex justify-center items-center ">
           <MessagesSquare className="text-[#B188E3]" />

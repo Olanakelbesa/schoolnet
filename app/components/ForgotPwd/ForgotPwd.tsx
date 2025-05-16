@@ -2,7 +2,9 @@
 
 import type React from "react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import NotificationContainer from "../Notification";
+import { forgotPassword } from "@/redux/slices/authSlice";
 
 export default function PasswordResetForm() {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ export default function PasswordResetForm() {
       type: "success" | "error" | "warning" | "info";
     }[]
   >([]);
+  const router = useRouter();
 
   // Generate unique ID for notifications
   const generateId = () => Math.floor(Math.random() * 1000000);
@@ -55,12 +58,13 @@ export default function PasswordResetForm() {
 
     if (!emailValidationResult) {
       try {
-        // Here you would typically call your API to send the reset email
-        // This is a mock implementation
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const response = await forgotPassword(email);
+        // Store email in localStorage for subsequent steps
+        localStorage.setItem("resetEmail", email);
         addNotification("Reset link sent to your email", "success");
-      } catch (error) {
-        addNotification("Failed to send reset link", "error");
+        router.push("/forgot-pwd/verify"); // Use router for navigation
+      } catch (error: any) {
+        addNotification(error.message, "error");
       }
     }
     setIsSubmitting(false);
