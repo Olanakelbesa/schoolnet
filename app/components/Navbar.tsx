@@ -40,7 +40,7 @@ function Navbar() {
         <div className="flex justify-between w-full">
           <Link href={"/"}>
             <Image
-              src={"/schoolnet-logo.svg"}
+              src={"/logo.png"}
               alt="logo"
               width={150}
               height={150}

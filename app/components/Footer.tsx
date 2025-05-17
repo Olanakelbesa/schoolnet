@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Twitter, MapPin } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import logo from "@/public/logo.png"
 
 export default function Footer() {
   return (
@@ -11,7 +12,7 @@ export default function Footer() {
           <div>
           <Link href={"/"}>
             <Image
-              src={"/schoolnet-logo.svg"}
+              src={logo}
               alt="logo"
               width={200}
               height={200}

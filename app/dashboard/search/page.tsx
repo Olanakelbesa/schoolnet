@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, MapPin, Users, Building, GraduationCap } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -17,7 +17,9 @@ import {
 import { AppDispatch, RootState } from "@/redux/store";
 import { School } from "@/redux/slices/schoolSlice";
 
-export default function SchoolsPage() {
+export default function SearchResultsPage() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") || "";
   const dispatch = useDispatch<AppDispatch>();
   const {
     filteredSchools,
@@ -29,15 +31,15 @@ export default function SchoolsPage() {
     filters,
   } = useSelector((state: RootState) => state.schools);
 
-  console.log(filteredSchools);
-  console.log(filteredSchools[0]?.schoolFacilites[0]?.img_path[0]);
   useEffect(() => {
     dispatch(fetchSchools());
   }, [dispatch]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearchQuery(e.target.value));
-  };
+  useEffect(() => {
+    if (query) {
+      dispatch(setSearchQuery(query));
+    }
+  }, [query, dispatch]);
 
   const handleTypeChange = (type: string) => {
     dispatch(setSchoolType(type));
@@ -84,53 +86,45 @@ export default function SchoolsPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Schools</h1>
-        <p className="text-gray-600">Find and explore schools in your area</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Search Results for "{query}"
+        </h1>
+        <p className="text-gray-600">
+          Found {filteredSchools.length} schools matching your search
+        </p>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="flex-1">
-          <Input
-            type="text"
-            placeholder="Search schools by name or location..."
-            value={filters.searchQuery}
-            onChange={handleSearch}
-            className="w-full"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={filters.schoolType === "all" ? "default" : "outline"}
-            onClick={() => handleTypeChange("all")}
-          >
-            All
-          </Button>
-          <Button
-            variant={filters.schoolType === "private" ? "default" : "outline"}
-            onClick={() => handleTypeChange("private")}
-          >
-            Private
-          </Button>
-          <Button
-            variant={filters.schoolType === "public" ? "default" : "outline"}
-            onClick={() => handleTypeChange("public")}
-          >
-            Public
-          </Button>
-          <Button
-            variant={filters.schoolType === "mixed" ? "default" : "outline"}
-            onClick={() => handleTypeChange("mixed")}
-          >
-            Mixed
-          </Button>
-        </div>
+      {/* Filter Buttons */}
+      <div className="flex gap-2 mb-8">
+        <Button
+          variant={filters.schoolType === "all" ? "default" : "outline"}
+          onClick={() => handleTypeChange("all")}
+        >
+          All
+        </Button>
+        <Button
+          variant={filters.schoolType === "private" ? "default" : "outline"}
+          onClick={() => handleTypeChange("private")}
+        >
+          Private
+        </Button>
+        <Button
+          variant={filters.schoolType === "public" ? "default" : "outline"}
+          onClick={() => handleTypeChange("public")}
+        >
+          Public
+        </Button>
+        <Button
+          variant={filters.schoolType === "mixed" ? "default" : "outline"}
+          onClick={() => handleTypeChange("mixed")}
+        >
+          Mixed
+        </Button>
       </div>
 
       {/* Schools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedSchools.map((school: School) => (
-          
           <Link
             href={`/dashboard/school-details/${school._id}`}
             key={school._id}
@@ -138,12 +132,8 @@ export default function SchoolsPage() {
           >
             <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
               <div className="relative h-48 w-full">
-                
                 <Image
-                  src={
-                    
-                     "/school.png"
-                  }
+                  src="/school.png"
                   alt={school.name}
                   fill
                   className="object-cover rounded-t-lg"
@@ -169,7 +159,7 @@ export default function SchoolsPage() {
                   <div className="flex items-center bg-purple-50 px-3 py-1 rounded-full">
                     <GraduationCap className="h-4 w-4 text-purple-700 mr-1" />
                     <span className="text-sm font-medium text-gray-800">
-                      {school.division.join(", ")}
+                      {school.division.join(", ") || "All Divisions"}
                     </span>
                   </div>
                 </div>

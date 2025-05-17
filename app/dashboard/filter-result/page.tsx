@@ -1,119 +1,130 @@
-import React from "react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import { useSelector } from "react-redux";
+import { Search, MapPin, Users, Star, Tag } from "lucide-react";
+import { RootState } from "@/redux/store";
+import { School } from "@/redux/slices/schoolSlice";
 
-const schools = [
-  {
-    id: 1,
-    name: "John Kennedy School",
-    location: "Washington Ave, Manchester",
-    type: "Public",
-    students: 1800,
-    rating: 4.9,
-    imageUrl: "/school1.jpg",
-  },
-  {
-    id: 2,
-    name: "John Kennedy School",
-    location: "Washington Ave, Manchester",
-    type: "Public",
-    students: 1800,
-    rating: 4.9,
-    imageUrl: "/school1.jpg",
-  },
-  {
-    id: 3,
-    name: "John Kennedy School",
-    location: "Washington Ave, Manchester",
-    type: "Public",
-    students: 1800,
-    rating: 4.9,
-    imageUrl: "/school1.jpg",
-  },
-];
+interface FilteredSchoolsResponse {
+  school: School[];
+  results: number;
+  status: string;
+}
 
-export default function MyListPage() {
-  return (
-    <div className="px-8 py-6">
-      <div className="py-4  mb-6">
-        <h1 className="text-3xl font-bold py-1">
-          My Matches
-        </h1>
-        <p className="w-2/3 text-black/60">
-          We use the information you've provided us and your general activity on
-          School Net to show you a personalized list of the best schools for
-          you. SchoolNet strives to give you as many options as possible so that
-          you can attend the school that's just right for you.
-        </p>
+export default function FilterResultPage() {
+  const router = useRouter();
+  const { filteredSchools, loading, error } = useSelector(
+    (state: RootState) => state.schools
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
       </div>
-      <div className="flex flex-col gap-6  mx-auto">
-        {schools.map((school) => (
-          <div
-            key={school.id}
-            className="flex items-center bg-white rounded-xl shadow-md px-4 py-3 gap-4 border border-gray-100 hover:shadow-lg transition-shadow"
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
+
+  const response = filteredSchools as unknown as FilteredSchoolsResponse;
+  const schools = response?.school || [];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {schools.length} Schools Found
+          </h1>
+          <button
+            onClick={() => router.push("/dashboard/filter")}
+            className="text-purple-600 hover:text-purple-700"
           >
-            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-              <Image
-                src={school.imageUrl}
-                alt={school.name}
-                width={80}
-                height={80}
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-lg text-gray-900">
-                {school.name}
-              </div>
-              <div className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                  <path
-                    d="M12 21c-4.418 0-8-3.582-8-8 0-4.418 3.582-8 8-8s8 3.582 8 8c0 4.418-3.582 8-8 8Z"
-                    stroke="#614B7D"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-                    stroke="#614B7D"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                {school.location}
-              </div>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">
-                  {school.type}
-                </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800 flex items-center gap-1">
-                  {school.students}
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"
-                      stroke="#614B7D"
-                      strokeWidth="1.5"
-                    />
-                    <circle
-                      cx="9"
-                      cy="7"
-                      r="4"
-                      stroke="#614B7D"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                  {school.rating}
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-                    <path
-                      d="m12 17.27 6.18 3.73-1.64-7.03L21 9.24l-7.19-.61L12 2 10.19 8.63 3 9.24l5.46 4.73L6.82 21z"
-                      stroke="#FFD700"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                </span>
-              </div>
-            </div>
+            Modify Filters
+          </button>
+        </div>
+
+        {schools.length === 0 ? (
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              No schools found
+            </h2>
+            <p className="text-gray-600">
+              Try adjusting your filters to find more schools
+            </p>
           </div>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {schools.map((school: School) => (
+              <div
+                key={school._id}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              >
+                <div className="relative h-48">
+                  <Image
+                    src={
+                      school.schoolFacilites[0]?.img_path[0] ||
+                      "/placeholder-school.jpg"
+                    }
+                    alt={school.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    {school.name}
+                  </h2>
+                  <div className="space-y-2 text-gray-600">
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      <span>
+                        {school.address[0]?.subCity}, {school.address[0]?.city}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className="h-4 w-4 mr-2" />
+                      <span>{school.schoolType}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2" />
+                      <span>{school.studentCount} Students</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {school.schoolTags.map((tag: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      router.push(`/dashboard/schools/${school._id}`)
+                    }
+                    className="mt-4 w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700 transition-colors"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

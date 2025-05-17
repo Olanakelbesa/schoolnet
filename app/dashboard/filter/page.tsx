@@ -13,14 +13,23 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
+import { useDispatch } from "react-redux";
+import { setFilteredSchools } from "@/redux/slices/schoolSlice";
+
+const priceRanges = {
+  "<5,000 ETB": { min: 0, max: 5000 },
+  "5,000-10,000 ETB": { min: 5000, max: 10000 },
+  "10,000-20,000 ETB": { min: 10000, max: 20000 },
+  ">20,000 ETB": { min: 20000, max: 1000000 },
+};
 
 const filterOptions: Record<string, string[]> = {
   Price: ["<5,000 ETB", "5,000-10,000 ETB", "10,000-20,000 ETB", ">20,000 ETB"],
   "Grade Level": ["KG", "Middle school", "Primary", "High school"],
   Review: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
   Language: ["Amharic", "French", "English", "Mixed"],
-  "School type": ["Public", "Private"],
-  Gender: ["Female", "Make", "Mixed"],
+  "School type": ["Public", "Private", "International"],
+  Gender: ["Male", "Female", "Co-Ed"],
   "School Format": ["Day School", "Night School", "Boarding School", "Either"],
   Location: [
     "Arada",
@@ -50,6 +59,7 @@ const filterRows = [
 
 export default function FilterPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string | null>
@@ -61,9 +71,68 @@ export default function FilterPage() {
     if (filter === "Location") setSelectedLocation(option);
   };
 
+  const handleShowResults = async () => {
+    try {
+      // Map UI filters to API parameters
+      const filterParams: any = {
+        address: {
+          city: "Addis Ababa",
+          subCity: selectedOptions["Location"] || "",
+        },
+      };
+
+      // Handle price range
+      if (selectedOptions["Price"]) {
+        const range =
+          priceRanges[selectedOptions["Price"] as keyof typeof priceRanges];
+        filterParams.budgetMin = range.min;
+        filterParams.budgetMax = range.max;
+      }
+
+      // Handle school type
+      if (selectedOptions["School type"]) {
+        filterParams.schoolType = [selectedOptions["School type"]];
+      }
+
+      // Handle review/rating
+      if (selectedOptions["Review"]) {
+        const rating = parseInt(selectedOptions["Review"].split(" ")[0]);
+        filterParams.googleRatings = rating;
+      }
+
+      // Handle gender
+      if (selectedOptions["Gender"]) {
+        filterParams.gender = selectedOptions["Gender"];
+      }
+
+      console.log("Sending filter params:", filterParams);
+
+      const response = await fetch("/api/schools/filter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(filterParams),
+      });
+
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch filtered schools");
+      }
+
+      dispatch(setFilteredSchools(data.data));
+      router.push("/dashboard/filter-result");
+    } catch (error) {
+      console.error("Error applying filters:", error);
+      // Handle error (show error message to user)
+    }
+  };
+
   return (
     <>
-      <div className="pb-10 flex items-center justify-center  ">
+      <div className="pb-10 flex items-center justify-center">
         <div className="bg-white rounded-xl w-full max-w-xl mx-4 p-6 relative">
           <h2 className="text-4xl font-bold text-center mb-6">Filter</h2>
           <div className="space-y-4">
@@ -79,8 +148,8 @@ export default function FilterPage() {
             ))}
           </div>
           <button
-            className="mt-8 w-full bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white py-2 rounded-full  transition"
-            onClick={() => router.push("/dashboard/filter-result")}
+            className="mt-8 w-full bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white py-2 rounded-full transition"
+            onClick={handleShowResults}
           >
             Show Results
           </button>
@@ -109,29 +178,15 @@ export default function FilterPage() {
                       }
                       value={selectedLocation}
                     >
-                      <SelectTrigger className="w-full  rounded-full border-2 border-[#b188e3] text-[#2e2e7b]  ">
+                      <SelectTrigger className="w-full rounded-full border-2 border-[#b188e3] text-[#2e2e7b]">
                         <SelectValue placeholder="Location" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Arada">Arada</SelectItem>
-                        <SelectItem value="Addis Ketema">
-                          Addis Ketema
-                        </SelectItem>
-                        <SelectItem value="Gulele">Gulele</SelectItem>
-                        <SelectItem value="Lideta">Lideta</SelectItem>
-                        <SelectItem value="Kirkos">Kirkos</SelectItem>
-                        <SelectItem value="Yeka">Yeka</SelectItem>
-                        <SelectItem value="Bole">Bole</SelectItem>
-                        <SelectItem value="Nifas Silk-Lafto">
-                          Nifas Silk-Lafto
-                        </SelectItem>
-                        <SelectItem value="Kolfe Keranio">
-                          Kolfe Keranio
-                        </SelectItem>
-                        <SelectItem value="Akaki Kality">
-                          Akaki Kality
-                        </SelectItem>
-                        <SelectItem value="Lemi Kura">Lemi Kura</SelectItem>
+                        {filterOptions["Location"].map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -139,7 +194,7 @@ export default function FilterPage() {
                   filterOptions[activeFilter].map((option) => (
                     <button
                       key={option}
-                      className={`w-full py-2  rounded-full border transition-all duration-200 focus:outline-none ${
+                      className={`w-full py-2 rounded-full border transition-all duration-200 focus:outline-none ${
                         selectedOptions[activeFilter] === option
                           ? "border-purple-400 bg-[#856cad] text-white shadow-md"
                           : "border-purple-300 bg-white text-black hover:shadow-lg"
@@ -181,12 +236,12 @@ function Header() {
             />
           </Link>
           <button
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer "
-                onClick={() => router.push("/dashboard")}
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer "
+            onClick={() => router.push("/dashboard")}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
       </nav>
     </div>

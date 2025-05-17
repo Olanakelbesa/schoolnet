@@ -152,4 +152,20 @@ export default function RoleSelection() {
                 Manage your school profile, connect with parents, and handle
                 admissions
               </p>
-     
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <Button
+            onClick={() => selectedRole && handleRoleSelection(selectedRole)}
+            disabled={!selectedRole || isLoading}
+            className="w-full md:w-auto bg-purple-600 hover:bg-purple-700"
+          >
+            {isLoading ? "Processing..." : "Continue"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

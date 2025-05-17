@@ -5,9 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Search, Menu, Bell, User, Settings, Filter } from "lucide-react";
 import Link from "next/link";
 import { BsFilter } from "react-icons/bs";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Equalizer, FilterList } from "@mui/icons-material";
 import { IoFilter } from "react-icons/io5";
+import { useDispatch } from "react-redux";
+import { setSearchQuery } from "@/redux/slices/schoolSlice";
+import { useCallback, useState } from "react";
+import debounce from "lodash/debounce";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -16,7 +20,24 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick, schoolName }: HeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const [searchValue, setSearchValue] = useState("");
   const isSchoolDetailsPage = pathname.includes("/school-details/");
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      dispatch(setSearchQuery(value));
+      router.push(`/dashboard/search?q=${encodeURIComponent(value)}`);
+    }, 500),
+    [dispatch, router]
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    debouncedSearch(value);
+  };
 
   if (isSchoolDetailsPage) {
     return (
@@ -62,18 +83,17 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b">
-      <div className=" lg:px-8 py-3">
+      <div className="lg:px-8 py-3">
         <div className="flex items-center justify-between">
           <button
-              onClick={onMenuClick}
-              className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-colors"
-              aria-label="Menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+            aria-label="Menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           {/* Left section - Search */}
           <div className="flex-1 max-w-2xl">
-            
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -82,6 +102,8 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
                 type="text"
                 placeholder="Search schools, locations, or categories..."
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:border-purple-500 focus:ring-purple-500"
+                value={searchValue}
+                onChange={handleSearchChange}
               />
             </div>
           </div>
@@ -109,8 +131,6 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
             >
               <User className="h-5 w-5" />
             </button>
-
-            
           </div>
         </div>
       </div>

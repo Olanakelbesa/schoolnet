@@ -9,7 +9,7 @@ declare module "next-auth" {
     email: string;
     role: string;
     accessToken: string;
-    token: string; // Make it required to match NextAuth's type
+    token: string; // Make token required to match JWT
   }
   interface Session {
     user: User;
@@ -22,6 +22,7 @@ declare module "next-auth/jwt" {
     email: string;
     role: string;
     accessToken: string;
+    token: string; // Make token required to match User
   }
 }
 
@@ -35,6 +36,7 @@ const handler = NextAuth({
       },
       async authorize(credentials): Promise<User | null> {
         try {
+          console.log("Attempting login with:", credentials?.email);
           const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/login`,
             {
@@ -43,7 +45,14 @@ const handler = NextAuth({
             }
           );
 
+          console.log("Login response:", response.data);
+
           if (response.data) {
+            // Store token in localStorage
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('token', response.data.token);
+            }
+            
             return {
               id: response.data.user.id,
               email: response.data.user.email,
@@ -54,6 +63,7 @@ const handler = NextAuth({
           }
           return null;
         } catch (error: any) {
+          console.error("Login error:", error.response?.data || error.message);
           throw new Error(error.response?.data?.message || "Authentication failed");
         }
       },
@@ -67,6 +77,7 @@ const handler = NextAuth({
         token.email = user.email;
         token.role = user.role;
         token.accessToken = user.accessToken;
+        token.token = user.token;
       }
       return token;
     },
@@ -77,7 +88,7 @@ const handler = NextAuth({
           email: token.email,
           role: token.role,
           accessToken: token.accessToken,
-          token: token.accessToken,
+          token: token.token,
         };
       }
       return session;
@@ -85,13 +96,14 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/login",
+    error: "/login", // Redirect to login page on error
   },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 });
 
 export { handler as GET, handler as POST }; 

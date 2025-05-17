@@ -81,6 +81,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // If user has a role and tries to access role selection, redirect to appropriate dashboard
+  if (token.role && token.role !== 'user' && pathname === roleSelectionRoute) {
+    console.log("Middleware - User already has role, redirecting to dashboard");
+    const url = new URL(
+      token.role === 'parent' ? '/dashboard' : '/school-dashboard',
+      request.url
+    )
+    return NextResponse.redirect(url)
+  }
+
   // Check role-based access
   const userRole = token.role as string
 
