@@ -32,7 +32,7 @@ export default function SchoolGrid({ schools }: SchoolGridProps) {
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
               <Image
-                src={school.imageUrl || "/placeholder.svg?height=60&width=60"}
+                src={"/school1.jpg"}
                 alt={school.name}
                 width={60}
                 height={60}

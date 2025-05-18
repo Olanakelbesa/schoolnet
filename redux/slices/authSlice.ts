@@ -9,6 +9,7 @@ interface User {
   email: string;
   phone?: string;
   role?: string;
+  onboardingCompleted?: boolean;
 }
 
 // Define the auth state interface
@@ -21,6 +22,7 @@ interface AuthState {
   otpSent: boolean;
   token: string | null;
   passwordResetToken: string | null;
+  roleUpdateRetries: number;
 }
 
 // Initial state
@@ -33,6 +35,7 @@ const initialState: AuthState = {
   otpSent: false,
   token: null,
   passwordResetToken: null,
+  roleUpdateRetries: 0,
 };
 
 const authSlice = createSlice({
@@ -52,6 +55,7 @@ const authSlice = createSlice({
       state.verificationMessage = null;
       state.otpSent = false;
       state.token = null;
+      localStorage.removeItem('token'); // Clear token from localStorage on logout
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -70,21 +74,24 @@ const authSlice = createSlice({
         state.user.role = action.payload;
       }
     },
+    setRoleUpdateRetries: (state, action: PayloadAction<number>) => {
+      state.roleUpdateRetries = action.payload;
+    },
+    setOnboardingCompleted: (state, action: PayloadAction<boolean>) => {
+      if (state.user) {
+        state.user.onboardingCompleted = action.payload;
+      }
+    },
   },
 });
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: BASE_URL,
-});
-
-// Add request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true, // Enable credentials for all requests
+  headers: {
+    'Content-Type': 'application/json', // Set default Content-Type
+  },
 });
 
 // Async thunk for signup
@@ -96,9 +103,9 @@ export const signup = async (userData: {
 }) => {
   try {
     const response = await api.post('/users/signup', userData);
-    // Store token if provided in response
+    // Store token in Redux state if provided in response
     if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+      return { ...response.data, token: response.data.token };
     }
     console.log("sign up response: ", response);
     return response.data;
@@ -170,21 +177,59 @@ export const resetPassword = async (data: { email: string; newPassword: string; 
   }
 };
 
-// Async thunk for updating user role
-export const updateRole = async (role: string, token: string) => {
-  try {
-    const response = await api.patch('/users/updateRole', 
-      { role },
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+// Async thunk for updating user role with retry logic
+export const updateRole = async (role: string) => {
+  let retries = 0;
+  const maxRetries = 2;
 
+  while (retries < maxRetries) {
+    try {
+      const response = await api.patch('/users/updateRole', { role }, {
+        withCredentials: true,
+      });
+      console.log("Update role response:", response);
+      return response.data;
+    } catch (error: any) {
+      retries++;
+      if (retries === maxRetries) {
+        throw new Error(error.response?.data?.message || 'Failed to update role after multiple attempts');
+      }
+      // Wait for 1 second before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+};
+
+// Async thunk for updating onboarding status
+export const updateOnboardingStatus = async (completed: boolean) => {
+  try {
+    const response = await api.patch('/users/updateOnboardingStatus', { onboardingCompleted: completed }, {
+      withCredentials: true,
+    });
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update role');
+    throw new Error(error.response?.data?.message || 'Failed to update onboarding status');
+  }
+};
+
+// Async thunk for login
+export const login = async (email: string, password: string) => {
+  try {
+    const response = await api.post('/users/login', { email, password }, {withCredentials: true});
+    
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Login failed');
+  }
+};
+
+export const logout = async () => {
+  try {
+    const response = await api.post('/users/logout', {}, { withCredentials: true });
+    console.log("Logout response:", response);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Logout failed');
   }
 };
 
@@ -195,7 +240,9 @@ export const {
   setError,
   setVerificationMessage,
   setOtpSent,
-  updateUserRole
+  updateUserRole,
+  setRoleUpdateRetries,
+  setOnboardingCompleted
 } = authSlice.actions;
 
 export default authSlice.reducer;

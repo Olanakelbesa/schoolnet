@@ -1,5 +1,9 @@
 import Image from "next/image";
 import React from "react";
+import howitwork1 from "@/public/images/image1.png";
+import howitwork2 from "@/public/images/image3.png";
+import howitwork3 from "@/public/images/image2.png";
+import howitwork4 from "@/public/images/image4.png";
 
 function HowItWork() {
   return (
@@ -23,7 +27,7 @@ function HowItWork() {
             </div>
             <div className="order-1 lg:order-2">
               <Image
-                src={"/images/image1.png"}
+                src={howitwork1}
                 alt="image"
                 width={300}
                 height={300}
@@ -39,7 +43,7 @@ function HowItWork() {
           <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-30 z-30">
             <div className="order-1">
               <Image
-                src={"/images/image3.png"}
+                src={howitwork2}
                 alt="image"
                 width={400}
                 height={400}
@@ -75,7 +79,7 @@ function HowItWork() {
             </div>
             <div className="order-1 lg:order-2">
               <Image
-                src={"/images/image2.png"}
+                src={howitwork3}
                 alt="image"
                 width={300}
                 height={300}
@@ -91,7 +95,7 @@ function HowItWork() {
           <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-30 z-20">
             <div className="order-1">
               <Image
-                src={"/images/image4.png"}
+                src={howitwork4}
                 alt="image"
                 width={400}
                 height={400}

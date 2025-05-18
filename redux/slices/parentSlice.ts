@@ -1,8 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { createAsyncThunk } from '@reduxjs/toolkit';
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Define interfaces
 interface Address {
@@ -15,19 +12,12 @@ interface ChildrenDetails {
   schoolType: string[];
 }
 
-interface ParentProfile {
+export interface ParentProfile {
   numberOfChildren: string;
   childrenDetails: ChildrenDetails;
   address: Address;
   budgetMin: number;
   budgetMax: number;
-}
-
-interface ParentState {
-  profile: ParentProfile | null;
-  loading: boolean;
-  error: string | null;
-  hasCompletedQuestionnaire: boolean;
 }
 
 // Initial state
@@ -37,6 +27,56 @@ const initialState: ParentState = {
   error: null,
   hasCompletedQuestionnaire: false,
 };
+
+interface ParentState {
+  profile: ParentProfile | null;
+  loading: boolean;
+  error: string | null;
+  hasCompletedQuestionnaire: boolean;
+}
+
+// Axios instance with credentials
+const api = axios.create({
+  baseURL: 'https://schoolnet-be.onrender.com/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true,
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
+// Create parent profile using only the API endpoint
+export const createParentProfile = async (parentProfile: ParentProfile) => {
+  try {
+    const response = await api.post('/parent', parentProfile, { withCredentials: true });
+    console.log("Parent profile created successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating parent profile:', error);
+    throw error;
+  }
+};
+
+// Wrap it in a thunk for Redux
+export const createParentProfileThunk = createAsyncThunk(
+  'parent/createProfile',
+  async (parentProfile: ParentProfile, { rejectWithValue }) => {
+    try {
+      return await createParentProfile(parentProfile);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create parent profile');
+    }
+  }
+);
 
 const parentSlice = createSlice({
   name: 'parent',
@@ -59,84 +99,21 @@ const parentSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getParentProfile.pending, (state) => {
+      .addCase(createParentProfileThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getParentProfile.fulfilled, (state, action) => {
+      .addCase(createParentProfileThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.profile = action.payload;
         state.hasCompletedQuestionnaire = !!action.payload;
       })
-      .addCase(getParentProfile.rejected, (state, action) => {
+      .addCase(createParentProfileThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch profile";
-        state.hasCompletedQuestionnaire = false;
+        state.error = action.payload as string || "Failed to create profile";
       });
   },
 });
-
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: '/api', // Changed to use relative path for Next.js API routes
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  withCredentials: true
-});
-
-console.log("API:", api);
-// Add request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  // Ensure headers object exists
-  config.headers = config.headers || {};
-  return config;
-});
-
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
-
-// Async thunk for creating parent profile
-export const createParentProfile = async (profileData: ParentProfile, token: string) => {
-  try {
-    console.log("Creating parent profile with data:", profileData);
-    
-    const response = await api.post('/parentProfiles', profileData);
-    
-    console.log("Create profile response:", response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error creating parent profile:', error.response?.data || error);
-    throw new Error(error.response?.data?.message || 'Failed to create parent profile');
-  }
-};
-
-export const getParentProfile = createAsyncThunk(
-  "parent/getProfile",
-  async (token: string) => {
-    try {
-      const response = await axios.get(
-        "http://localhost:3000/api/parentProfiles",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching parent profile:", error);
-      throw error;
-    }
-  }
-);
 
 export const {
   setProfile,
@@ -145,4 +122,4 @@ export const {
   clearProfile
 } = parentSlice.actions;
 
-export default parentSlice.reducer; 
+export default parentSlice.reducer;

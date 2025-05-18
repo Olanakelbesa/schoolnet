@@ -4,6 +4,7 @@ import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
+import logo from "../../public/logo.png";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -40,10 +41,10 @@ function Navbar() {
         <div className="flex justify-between w-full">
           <Link href={"/"}>
             <Image
-              src={"/logo.png"}
+              src={logo}
               alt="logo"
-              width={150}
-              height={150}
+              width={120}
+              height={120}
               className="mx-auto"
             />
           </Link>

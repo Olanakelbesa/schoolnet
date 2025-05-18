@@ -16,8 +16,9 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { logout, clearAuth } from "@/redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 interface SidebarProps {
   activeTab?: string;
@@ -37,6 +38,7 @@ export function Sidebar({
   onMobileMenuClose,
 }: SidebarProps) {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleTabClick = (tab: string) => {
     if (onTabChange) {
@@ -48,13 +50,12 @@ export function Sidebar({
 
   const handleLogout = async () => {
     try {
-      await signOut({
-        redirect: false,
-        callbackUrl: "/login",
-      });
-      router.push("/login");
+      await logout(); // Backend logout
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      dispatch(clearAuth());
+      router.push("/login");
     }
   };
 

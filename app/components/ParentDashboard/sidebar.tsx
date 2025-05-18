@@ -14,8 +14,9 @@ import {
   ChevronLeft,
   X,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { logout, clearAuth } from "@/redux/slices/authSlice";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -32,6 +33,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch();
 
   const handleTabClick = () => {
     if (onMobileMenuClose) {
@@ -41,13 +43,12 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     try {
-      await signOut({
-        redirect: false,
-        callbackUrl: "/login",
-      });
-      router.push("/login");
+      await logout(); // Backend logout
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      dispatch(clearAuth()); // Clear Redux state and localStorage
+      router.push("/login"); // Redirect to login page
     }
   };
 
@@ -134,7 +135,6 @@ export default function Sidebar({
               href="/dashboard/my-list"
               isCollapsed={isCollapsed}
             />
-          
           </nav>
 
           {/* Footer */}

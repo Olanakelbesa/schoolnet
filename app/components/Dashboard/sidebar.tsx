@@ -4,22 +4,29 @@ import type React from "react";
 import Link from "next/link";
 import { Home, Mail, List, Settings, LogOut } from "lucide-react";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { useDispatch } from "react-redux";
+import { logout, clearAuth } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
 
 export function Sidebar() {
+  const dispatch = useDispatch();
+  const router = useRouter();
+
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: "/login" });
+      await logout(); // Calls backend logout endpoint
     } catch (error) {
-      console.error("Error during logout:", error);
+      // Optionally handle error
+      console.error("Logout error:", error);
+    } finally {
+      dispatch(clearAuth()); // Clears Redux state and localStorage
+      router.push("/login"); // Redirect to login page
     }
   };
 
   return (
     <div className="w-64 h-screen border-r p-4 hidden md:flex flex-col justify-between">
-      {/* Wrapper with flex and space between sections */}
       <div className="flex flex-col h-full justify-between">
-        {/* Logo Section */}
         <Link href={"/"} className="mb-8">
           <Image
             src="/logo.png"
@@ -29,8 +36,6 @@ export function Sidebar() {
             className=""
           />
         </Link>
-
-        {/* Navigation Links Section */}
         <div className="space-y-2">
           <NavItem
             href="/dashboard"
@@ -49,8 +54,6 @@ export function Sidebar() {
             label="My List"
           />
         </div>
-
-        {/* Settings Section */}
         <div className="border-t pt-4 mt-4">
           <div className="text-xs font-semibold text-gray-500 mb-2">
             SETTINGS
@@ -95,9 +98,7 @@ function NavItem({
         active ? "bg-gray-100" : "hover:bg-gray-100"
       } ${className}`}
     >
-      <div
-        className={`h-6 w-6 ${active ? "text-[#856cad]" : "text-gray-500"}`}
-      >
+      <div className={`h-6 w-6 ${active ? "text-[#856cad]" : "text-gray-500"}`}>
         {icon}
       </div>
       <span className="text-sm font-medium">{label}</span>

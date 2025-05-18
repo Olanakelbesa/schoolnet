@@ -13,7 +13,7 @@ import { BsEye, BsEyeSlash } from "react-icons/bs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import axios from "axios";
+import { signup } from "@/redux/slices/authSlice";
 import NotificationContainer from "./Notification";
 
 function SignUp() {
@@ -111,23 +111,18 @@ function SignUp() {
     ) {
       setIsLoading(true);
       try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/signup`,
-          {
-            email,
-            password,
-            phoneNumber: phone,
-            passwordConfirm: confirmPwd,
-          }
-        );
+        // Use the signup function from your Redux slice
+        const response = await signup({
+          email,
+          password,
+          phoneNumber: phone,
+          passwordConfirm: confirmPwd,
+        });
 
         addNotification("OTP has been sent to your email", "success");
         router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
       } catch (error: any) {
-        addNotification(
-          error.response?.data?.message || "Signup failed",
-          "error"
-        );
+        addNotification(error.message || "Signup failed", "error");
       } finally {
         setIsLoading(false);
       }

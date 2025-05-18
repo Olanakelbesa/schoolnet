@@ -1,27 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Step1Component from "./step1-component";
-// import Step2Component from "./step2-component";
-// import Step3Component from "./step3-component";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
-import {
-  createParentProfile,
-  setProfile,
-  getParentProfile,
-} from "@/redux/slices/parentSlice";
+import { createParentProfile } from "@/redux/slices/parentSlice";
 
 export default function ClientQuestionnaire() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const dispatch = useDispatch<AppDispatch>();
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasCompletedQuestionnaire, setHasCompletedQuestionnaire] =
     useState(false);
 
@@ -43,8 +32,9 @@ export default function ClientQuestionnaire() {
   const [sameSchool, setSameSchool] = useState<string | null>(null);
   const [selectedGradeLevels, setSelectedGradeLevels] = useState<string[]>([]);
   const [selectedSchoolTypes, setSelectedSchoolTypes] = useState<string[]>([]);
+  const [error, setError] = useState<string>("");
 
-  // Step 1 questions config (dynamic)
+  // Questions logic
   let questions = [
     {
       key: "childCount",
@@ -62,14 +52,12 @@ export default function ClientQuestionnaire() {
       options: ["Yes", "No"],
       type: "single",
     });
-    // School type is always single select and comes before grade level
     questions.push({
       key: "schoolType",
       question: "What type of school do you want?",
       options: ["Private", "Public", "Faith-based", "International"],
       type: "single",
     });
-    // Grade level is multi-select only when sameSchool is Yes
     questions.push({
       key: "gradeLevel",
       question:
@@ -93,7 +81,6 @@ export default function ClientQuestionnaire() {
       type: "single",
     });
   }
-  // Always add location as last question
   questions.push({
     key: "location",
     question: "Preferred location or neighborhood",
@@ -101,72 +88,20 @@ export default function ClientQuestionnaire() {
     options: [],
   });
 
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [error, setError] = useState<string>("");
-
-  const totalSteps = 1;
-
-  useEffect(() => {
-    const checkQuestionnaireStatus = async () => {
-      try {
-        if (!session?.user?.accessToken) {
-          console.log("No access token found in session");
-          return;
-        }
-
-        console.log(
-          "Checking questionnaire status with token:",
-          session.user.accessToken
-        );
-
-        const response = await dispatch(
-          getParentProfile(session.user.accessToken)
-        ).unwrap();
-        console.log("Questionnaire data:", response);
-
-        if (response) {
-          console.log(
-            "Questionnaire already completed, redirecting to dashboard"
-          );
-          router.push("/dashboard");
-        } else {
-          console.log("No completed questionnaire found");
-        }
-      } catch (error) {
-        console.error("Error checking questionnaire status:", error);
-        if (error instanceof Error) {
-          console.error("Error details:", error.message);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkQuestionnaireStatus();
-  }, [session, router, dispatch]);
-
   const handleSubmit = async () => {
     try {
-      if (!session?.user?.accessToken) {
-        throw new Error("No authentication token found");
-      }
+      setIsLoading(true);
 
       // Validate all required fields
-      if (!selectedChildCount) {
+      if (!selectedChildCount)
         throw new Error("Please select the number of children");
-      }
-      if (!selectedLocation) {
-        throw new Error("Please select a location");
-      }
-      if (selectedLocation === "other" && !otherLocation) {
+      if (!selectedLocation) throw new Error("Please select a location");
+      if (selectedLocation === "other" && !otherLocation)
         throw new Error("Please specify your location");
-      }
-      if (!selectedGradeLevel && !selectedGradeLevels.length) {
+      if (!selectedGradeLevel && !selectedGradeLevels.length)
         throw new Error("Please select at least one grade level");
-      }
-      if (!selectedSchoolType && !selectedSchoolTypes.length) {
+      if (!selectedSchoolType && !selectedSchoolTypes.length)
         throw new Error("Please select at least one school type");
-      }
 
       // Format the data according to the API requirements
       const profileData = {
@@ -193,76 +128,23 @@ export default function ClientQuestionnaire() {
         },
         budgetMin: 500,
         budgetMax: 1500,
-        preferredLocations: [
-          selectedLocation === "other" ? otherLocation : selectedLocation,
-        ],
-        favoriteSchools: [],
-        img: "default.png",
       };
 
-      // Log the data being sent
-      console.log(
-        "Submitting profile data:",
-        JSON.stringify(profileData, null, 2)
-      );
+      // Call the API directly
+      const response = await createParentProfile(profileData);
+      console.log("Parent profile created:", response);
 
-      // Create parent profile with JWT token from session
-      const response = await createParentProfile(
-        profileData,
-        session.user.accessToken
-      );
-
-      console.log(
-        "Profile creation response:",
-        JSON.stringify(response, null, 2)
-      );
-
-      // Update Redux store with the profile data
-      if (response.data && response.data.parentProfile) {
-        dispatch(setProfile(response.data.parentProfile));
-        // Mark questionnaire as completed
-        setHasCompletedQuestionnaire(true);
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } else if (response.data) {
-        dispatch(setProfile(response.data));
-        // Mark questionnaire as completed
-        setHasCompletedQuestionnaire(true);
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } else {
-        console.warn("Unexpected response format:", response);
-        throw new Error("Invalid response format from server");
-      }
-
-      // Show success modal
+      setHasCompletedQuestionnaire(true);
       setShowModal(true);
-    } catch (error) {
-      console.error("Error submitting questionnaire:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit questionnaire"
-      );
+    } catch (error: any) {
+      setError(error.message || "Failed to submit questionnaire");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
-  }
-
-  if (hasCompletedQuestionnaire) {
-    router.push("/dashboard");
-    return null;
-  }
-
-  // Validation for required questions
   const validateCurrent = () => {
-    const q = questions[currentQuestion];
+    const q = questions[currentStep - 1];
     const currentKey = q.key;
 
     if (currentKey === "childCount") {
@@ -272,7 +154,6 @@ export default function ClientQuestionnaire() {
     } else if (currentKey === "schoolType") {
       if (!selectedSchoolType) return "Please select a school type.";
     } else if (currentKey === "gradeLevel") {
-      // For grade level, check if it's multi-select case
       if (
         sameSchool === "Yes" &&
         (selectedChildCount === "Two" || selectedChildCount === "More than two")
@@ -280,12 +161,10 @@ export default function ClientQuestionnaire() {
         if (!selectedGradeLevels.length) {
           return "Please select at least one grade level for your children.";
         }
-        // Check if user has selected more than allowed grade levels
         if (selectedChildCount === "Two" && selectedGradeLevels.length > 2) {
           return "You can select a maximum of 2 grade levels for two children.";
         }
       } else {
-        // Single select case
         if (!selectedGradeLevel) return "Please select a grade level.";
       }
     } else if (currentKey === "location") {
@@ -303,17 +182,25 @@ export default function ClientQuestionnaire() {
       return;
     }
     setError("");
-    setCurrentQuestion((prev) => Math.min(prev + 1, questions.length - 1));
+    setCurrentStep((prev) => Math.min(prev + 1, questions.length));
   };
 
   const handleBack = () => {
     setError("");
-    setCurrentQuestion((prev) => Math.max(prev - 1, 0));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleFinish = () => {
     handleSubmit();
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-screen-lg mx-auto px-4 sm:px-6 md:px-8 py-6">
@@ -331,12 +218,11 @@ export default function ClientQuestionnaire() {
       </div>
 
       <div className="border w-full md:w-2/3 mx-auto border-[#614B7D] rounded-xl p-4 sm:p-6">
-        {/* Progress Indicator */}
         <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
           {Array.from({ length: questions.length }).map((_, index) => {
             const stepNumber = index + 1;
-            const isCompleted = currentQuestion > index;
-            const isCurrent = currentQuestion === index;
+            const isCompleted = currentStep > stepNumber;
+            const isCurrent = currentStep === stepNumber;
             return (
               <div key={index} className="flex items-center">
                 <div
@@ -351,7 +237,7 @@ export default function ClientQuestionnaire() {
                 {stepNumber !== questions.length && (
                   <div
                     className={`h-1 w-12 sm:w-16 mx-2 rounded-full ${
-                      currentQuestion > index ? "bg-purple-500" : "bg-gray-200"
+                      currentStep > stepNumber ? "bg-purple-500" : "bg-gray-200"
                     }`}
                   />
                 )}
@@ -360,43 +246,39 @@ export default function ClientQuestionnaire() {
           })}
         </div>
 
-        {/* Step Components */}
-        {currentStep === 1 && (
-          <Step1Component
-            selectedGradeLevel={selectedGradeLevel}
-            setSelectedGradeLevel={setSelectedGradeLevel}
-            selectedSchoolType={selectedSchoolType}
-            setSelectedSchoolType={setSelectedSchoolType}
-            selectedChildCount={selectedChildCount}
-            setSelectedChildCount={setSelectedChildCount}
-            selectedLocation={selectedLocation}
-            setSelectedLocation={setSelectedLocation}
-            otherLocation={otherLocation}
-            setOtherLocation={setOtherLocation}
-            currentQuestion={currentQuestion}
-            questionsLength={questions.length}
-            sameSchool={sameSchool}
-            setSameSchool={setSameSchool}
-            selectedGradeLevels={selectedGradeLevels}
-            setSelectedGradeLevels={setSelectedGradeLevels}
-            selectedSchoolTypes={selectedSchoolTypes}
-            setSelectedSchoolTypes={setSelectedSchoolTypes}
-            questions={questions}
-            error={error}
-          />
-        )}
+        <Step1Component
+          selectedGradeLevel={selectedGradeLevel}
+          setSelectedGradeLevel={setSelectedGradeLevel}
+          selectedSchoolType={selectedSchoolType}
+          setSelectedSchoolType={setSelectedSchoolType}
+          selectedChildCount={selectedChildCount}
+          setSelectedChildCount={setSelectedChildCount}
+          selectedLocation={selectedLocation}
+          setSelectedLocation={setSelectedLocation}
+          otherLocation={otherLocation}
+          setOtherLocation={setOtherLocation}
+          currentQuestion={currentStep - 1}
+          questionsLength={questions.length}
+          sameSchool={sameSchool}
+          setSameSchool={setSameSchool}
+          selectedGradeLevels={selectedGradeLevels}
+          setSelectedGradeLevels={setSelectedGradeLevels}
+          selectedSchoolTypes={selectedSchoolTypes}
+          setSelectedSchoolTypes={setSelectedSchoolTypes}
+          questions={questions}
+          error={error}
+        />
 
-        {/* Navigation Buttons */}
         <div className="flex justify-between mt-8">
           <Button
             onClick={handleBack}
             variant="outline"
             className="w-auto text-[#8a70d6] border-[#8a70d6] hover:bg-[#f8f5ff] hover:text-[#8a70d6] rounded-full px-6"
-            disabled={currentQuestion === 0}
+            disabled={currentStep === 1}
           >
             Go Back
           </Button>
-          {currentQuestion === questions.length - 1 ? (
+          {currentStep === questions.length ? (
             <Button
               onClick={handleFinish}
               className="w-auto bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#b188e3] hover:to-[#3F3D56] text-white rounded-full px-6"
@@ -414,9 +296,8 @@ export default function ClientQuestionnaire() {
         </div>
       </div>
 
-      {/* Custom Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50  bg-opacity-40 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-opacity-40 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white rounded-xl border border-[#b188e3] shadow-lg p-4 sm:p-6 w-full max-w-xs sm:max-w-sm md:max-w-md mx-4 text-center">
             <h2 className="text-lg sm:text-2xl font-bold text-[#2e2e7b] mb-4">
               🎉 Thank You!

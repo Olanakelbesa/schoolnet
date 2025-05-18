@@ -2,94 +2,68 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { School, Users } from "lucide-react";
-import { updateRole, updateUserRole } from "@/redux/slices/authSlice";
+import { updateUserRole, updateRole } from "@/redux/slices/authSlice";
+import Cookies from "js-cookie";
+import { RootState } from "@/redux/store";
 
 export default function RoleSelection() {
   const router = useRouter();
-  const { data: session, update } = useSession();
   const dispatch = useDispatch();
+  // Get user and token from Redux or cookies
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token =
+    useSelector((state: RootState) => state.auth.token) ||
+    Cookies.get("auth_token");
   const [selectedRole, setSelectedRole] = useState<"parent" | "school" | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user already has a role
-  useEffect(() => {
-    if (session?.user?.role && session.user.role !== "user") {
-      console.log(
-        "User already has a role, redirecting to appropriate dashboard..."
-      );
-      if (session.user.role === "parent") {
-        router.push("/dashboard");
-      } else if (session.user.role === "school") {
-        router.push("/school-dashboard");
-      }
-    }
-  }, [session, router]);
 
   const handleRoleSelection = async (role: "parent" | "school") => {
+    setSelectedRole(role);
     setIsLoading(true);
     setError(null);
     try {
-      if (!session?.user?.accessToken) {
-        throw new Error("No authentication token found");
-      }
+      if (!token) throw new Error("No authentication token found");
 
-      // Call the backend API to update the role using JWT token
-      const response = await fetch("/api/updateRole", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.user.accessToken}`,
-        },
-        body: JSON.stringify({ role }),
-      });
+      // Update the role in the backend (pass token)
+      const response = await updateRole(role);
+      console.log("Role updated successfully:", response);
 
-      // First check if the response is JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Invalid response from server");
-      }
+      // Update Redux state with the new role
+      dispatch(updateUserRole(role));
+      console.log(
+        "Redux state updated with new role:",
+        response.data.user.role
+      );
 
-      const data = await response.json();
-      console.log("role response:", data);
-
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-      }
-
-      if (!data.data?.user?.role) {
-        throw new Error("Invalid response format from server");
-      }
-
-      // Update the session with the selected role
-      const updatedSession = {
-        ...session,
-        user: {
-          ...session.user,
-          role: data.data.user.role,
-        },
-      };
-
-      const res = await update(updatedSession);
-      console.log("session update response:", res);
+      const updatedUser = response?.user ? response.user : { ...user, role };
+      console.log("Updated user:", updatedUser);
+      Cookies.set(
+        "user_info",
+        encodeURIComponent(JSON.stringify(updatedUser)),
+        { path: "/" }
+      );
+      console.log("Updated user info cookie:", updatedUser);
 
       // Redirect based on role
-      if (data.data.user.role === "parent") {
+      if (role === "parent") {
         router.push("/parentquestionnaire");
-      } else {
+      } else if (role === "school") {
         router.push("/school-dashboard");
       }
     } catch (error) {
       console.error("Error updating role:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to update role"
+        error instanceof Error
+          ? `Failed to update role: ${error.message}`
+          : "Failed to update role. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -160,7 +134,7 @@ export default function RoleSelection() {
           <Button
             onClick={() => selectedRole && handleRoleSelection(selectedRole)}
             disabled={!selectedRole || isLoading}
-            className="w-full md:w-auto bg-purple-600 hover:bg-purple-700"
+            className="w-full md:w-auto bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white"
           >
             {isLoading ? "Processing..." : "Continue"}
           </Button>

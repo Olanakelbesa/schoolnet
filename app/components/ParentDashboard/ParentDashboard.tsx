@@ -1,4 +1,11 @@
+"use client";
+
+import { useEffect } from "react";
 import { ChevronRight } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { School } from "@/redux/slices/schoolSlice";
+import Image from "next/image";
 import Header from "@/app/components/ParentDashboard/Header";
 import HeroSection from "@/app/components/ParentDashboard/HeroSection";
 import SchoolCategoryCard from "@/app/components/ParentDashboard/SchoolCategoryCard";
@@ -6,154 +13,150 @@ import SchoolCard from "@/app/components/ParentDashboard/SchoolCard";
 import SchoolGrid from "@/app/components/ParentDashboard/SchoolGrid";
 import Link from "next/link";
 
+interface SubcitySchools {
+  name: string;
+  schoolCount: number;
+  schools: School[];
+}
+
+interface SchoolInfo {
+  id: string;
+  name: string;
+  location: string;
+  type: string;
+  students: number;
+  rating: number;
+  imageUrl?: string;
+}
+
+// Extend the School interface to include images
+interface ExtendedSchool extends School {
+  images?: string[];
+}
+
 export default function ParentDashboard() {
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    profile,
+    loading: profileLoading,
+    error: profileError,
+  } = useSelector((state: RootState) => state.parentProfile);
+  const {
+    schools,
+    loading: schoolsLoading,
+    error: schoolsError,
+  } = useSelector((state: RootState) => state.schools);
+
+ 
+
   // School category data
   const schoolCategories = [
     {
       title: "Primary schools",
-      icon: "/primary-school.png",
+      icon: "/images/primary-school.png",
       bgColor: "bg-purple-100",
       iconColor: "text-purple-700",
     },
     {
       title: "Middle schools",
-      icon: "/middle-school.png",
+      icon: "/images/middle-school.png",
       bgColor: "bg-blue-100",
       iconColor: "text-blue-700",
     },
     {
       title: "High schools",
-      icon: "/high-school.png",
+      icon: "/images/high-school.png",
       bgColor: "bg-indigo-100",
       iconColor: "text-indigo-700",
     },
     {
       title: "University and colleges",
-      icon: "/university.png",
+      icon: "/images/university.png",
       bgColor: "bg-blue-100",
       iconColor: "text-blue-700",
     },
   ];
 
-  // School data
-  const schools = [
-    {
-      id: "1",
-      name: "John Kennedy School",
-      location: "Washington Ave, Manchester",
-      type: "Public",
-      students: 1800,
-      rating: 4.9,
-      reviewCount: 512,
-      description:
-        "Graduate John F. Kennedy School offered an exceptional education with dedicated teachers who inspired me to excel. The diverse programs and strong community support helped me build lasting friendships and prepare for future challenges.",
-    },
-    {
-      id: "2",
-      name: "John Kennedy School",
-      location: "Washington Ave, Manchester",
-      type: "Public",
-      students: 1800,
-      rating: 4.9,
-      reviewCount: 512,
-      description:
-        "Graduate John F. Kennedy School offered an exceptional education with dedicated teachers who inspired me to excel. The diverse programs and strong community support helped me build lasting friendships and prepare for future challenges.",
-    },
-  ];
+  // Transform School type to SchoolInfo type
+  const transformToSchoolInfo = (school: ExtendedSchool): SchoolInfo => ({
+    id: school._id,
+    name: school.name,
+    location: `${school.address[0]?.subCity}, ${school.address[0]?.city}`,
+    type: school.schoolType,
+    students: school.studentCount,
+    rating: 4.5,
+    imageUrl: school.images?.[0] || "/images/placeholder.svg", // Use school image if available, otherwise use placeholder
+  });
 
-  // Subcity data
-  const subcities = [
-    {
-      name: "Bole",
-      schoolCount: 20,
-      schools: [
-        {
-          id: "3",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "4",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "5",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "6",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-      ],
-    },
-    {
-      name: "Kirkos",
-      schoolCount: 15,
-      schools: [
-        {
-          id: "7",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "8",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "9",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-        {
-          id: "10",
-          name: "John Kennedy School",
-          location: "Washington Ave, Manchester",
-          type: "Public",
-          students: 1800,
-          rating: 4.9,
-          imageUrl: "/dandiboru.jpg",
-        },
-      ],
-    },
-  ];
+  // Filter schools based on subcity and schoolType for "Schools near you"
+  const getNearbySchools = () => {
+    if (!profile || !schools) return [];
+
+    return schools
+      .filter((school: School) => {
+        // Check if school is in parent's subcity and matches school type
+        const isInParentSubcity =
+          school.address[0]?.subCity.toLowerCase() ===
+          profile.address?.subCity.toLowerCase();
+        const matchesSchoolType = profile.childrenDetails?.schoolType?.some(
+          (type: string) =>
+            school.schoolType.toLowerCase() === type.toLowerCase()
+        );
+
+        return isInParentSubcity && matchesSchoolType;
+      })
+      .slice(0, 5); // Get top 5 schools
+  };
+
+  // Filter schools based on subcity only for "Schools by Subcity"
+  const getSchoolsBySubcity = () => {
+    if (!profile || !schools) return [];
+
+    // Use parent's subcity for grouping schools
+    const parentSubcity = profile.address?.subCity;
+    if (!parentSubcity) return [];
+
+    const schoolsInSubcity = schools.filter(
+      (school) =>
+        school.address[0]?.subCity.toLowerCase() === parentSubcity.toLowerCase()
+    );
+
+    if (schoolsInSubcity.length === 0) return [];
+
+    return [
+      {
+        name: parentSubcity,
+        schoolCount: schoolsInSubcity.length,
+        schools: schoolsInSubcity.slice(0, 4),
+      },
+    ];
+  };
+
+  const nearbySchools = getNearbySchools();
+  const schoolsBySubcity = getSchoolsBySubcity();
+
+  if (profileLoading || schoolsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (profileError || schoolsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500">
+          Error: {profileError || schoolsError}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-
         {/* Main content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Hero section */}
@@ -174,22 +177,37 @@ export default function ParentDashboard() {
 
           {/* Schools near you */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Schools near you</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Schools near you</h2>
+              <Link
+                href="/dashboard/schools"
+                className="text-sm text-purple-700 hover:text-purple-800 flex items-center"
+              >
+                See all <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
 
             <div className="flex flex-col gap-3">
-              {schools.map((school, index) => (
-                <SchoolCard
-                  key={index}
-                  id={school.id}
-                  name={school.name}
-                  location={school.location}
-                  type={school.type}
-                  students={school.students}
-                  rating={school.rating}
-                  reviewCount={school.reviewCount}
-                  description={school.description}
-                />
-              ))}
+              {nearbySchools.length > 0 ? (
+                nearbySchools.map((school) => (
+                  <SchoolCard
+                    key={school._id}
+                    id={school._id}
+                    name={school.name}
+                    location={`${school.address[0]?.subCity}, ${school.address[0]?.city}`}
+                    type={school.schoolType}
+                    students={school.studentCount}
+                    rating={4.5}
+                    reviewCount={0}
+                    description={school.description}
+                  />
+                ))
+              ) : (
+                <div className="text-gray-500 text-center py-4">
+                  No schools found in {profile?.address?.subCity} matching your
+                  school type preferences
+                </div>
+              )}
             </div>
           </div>
 
@@ -205,23 +223,33 @@ export default function ParentDashboard() {
               </Link>
             </div>
 
-            {subcities.map((subcity, index) => (
-              <div key={index} className="mb-6">
-                <div className="flex items-center mb-3">
-                  <Link
-                    href={`/dashboard/schools?subcity=${subcity.name}`}
-                    className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-md p-2 mr-2 cursor-pointer"
-                  >
-                    <span className="text-sm font-medium">{subcity.name}</span>
-                  </Link>
-                  <div className="text-sm text-gray-500">
-                    {subcity.schoolCount} schools
+            {schoolsBySubcity.length > 0 ? (
+              schoolsBySubcity.map((subcity, index: number) => (
+                <div key={index} className="mb-6">
+                  <div className="flex items-center mb-3">
+                    <Link
+                      href={`/dashboard/schools/${subcity.name}`}
+                      className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-md p-2 mr-2 cursor-pointer"
+                    >
+                      <span className="text-sm font-medium">
+                        {subcity.name}
+                      </span>
+                    </Link>
+                    <div className="text-sm text-gray-500">
+                      {subcity.schoolCount} schools
+                    </div>
                   </div>
-                </div>
 
-                <SchoolGrid schools={subcity.schools} />
+                  <SchoolGrid
+                    schools={subcity.schools.map(transformToSchoolInfo)}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 text-center py-4">
+                No schools found in {profile?.address?.subCity}
               </div>
-            ))}
+            )}
           </div>
         </main>
       </div>
