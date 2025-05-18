@@ -57,11 +57,24 @@ api.interceptors.response.use(
 // Create parent profile using only the API endpoint
 export const createParentProfile = async (parentProfile: ParentProfile) => {
   try {
-    const response = await api.post('/parent', parentProfile, { withCredentials: true });
+    const response = await api.post('/parentProfiles', parentProfile, { 
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
     console.log("Parent profile created successfully:", response.data);
     return response.data;
   } catch (error) {
     console.error('Error creating parent profile:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('Error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+      });
+    }
     throw error;
   }
 };

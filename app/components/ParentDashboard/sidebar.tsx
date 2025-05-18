@@ -83,10 +83,10 @@ export default function Sidebar({
                 <Link href="/dashboard">
                   <Image
                     src="/logo.png"
-                    alt="SchoolNet"
-                    width={160}
-                    height={48}
-                    className="h-12 w-auto"
+                    alt="logo"
+                    width={100}
+                    height={100}
+                    style={{ width: "auto", height: "auto" }}
                   />
                 </Link>
               </div>

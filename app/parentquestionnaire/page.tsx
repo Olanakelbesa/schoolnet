@@ -1,13 +1,19 @@
-import React from 'react'
-import ClientQuestionnaire from '../components/client-questionnaire'
+"use client";
 
+import React, { useEffect } from "react";
+import ClientQuestionnaire from "../components/client-questionnaire";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
-function page() {
+function ParentQuestionnairePage() {
+  
+
   return (
     <div>
-        <ClientQuestionnaire/>
+      <ClientQuestionnaire />
     </div>
-  )
+  );
 }
 
-export default page
+export default ParentQuestionnairePage;

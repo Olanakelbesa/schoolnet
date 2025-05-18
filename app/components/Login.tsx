@@ -79,23 +79,35 @@ function Login() {
       setIsLoading(true);
       try {
         const data = await login(email, password);
-        console.log("Login responseeee:", data);
-
+        console.log("Login response:", data);
+        console.log("User role from response:", data.user.role);
 
         // Store in Redux
         dispatch(setAuth({ user: data.user, token: data.token }));
+        console.log("Auth state after dispatch:", {
+          user: data.user,
+          token: data.token,
+        });
 
         addNotification("Login successful!", "success");
 
-        // Redirect based on role
-        if (!data.user.role || data.user.role === "user") {
-          router.push("/role-selection");
+        // Redirect based on role from backend
+        if (data.user.role === "user") {
+          console.log("User role is 'user', redirecting to role selection");
+          // Use replace instead of push to prevent back navigation
+          router.replace("/role-selection");
         } else if (data.user.role === "parent") {
-          router.push("/dashboard");
+          console.log("User role is 'parent', redirecting to dashboard");
+          router.replace("/dashboard");
         } else if (data.user.role === "school") {
-          router.push("/school-dashboard");
+          console.log("User role is 'school', redirecting to school dashboard");
+          router.replace("/school-dashboard");
+        } else {
+          console.log("No role found, redirecting to role selection");
+          router.replace("/role-selection");
         }
       } catch (error: any) {
+        console.error("Login error:", error);
         addNotification(
           error.message || "An error occurred during login. Please try again.",
           "error"

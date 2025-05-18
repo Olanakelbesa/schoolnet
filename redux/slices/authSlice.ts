@@ -184,12 +184,16 @@ export const updateRole = async (role: string) => {
 
   while (retries < maxRetries) {
     try {
-      const response = await api.patch('/users/updateRole', { role }, {
-        withCredentials: true,
-      });
+      const response = await api.patch('/users/updateRole', 
+        { role }, 
+        {
+          withCredentials: true
+        }
+      );
       console.log("Update role response:", response);
       return response.data;
     } catch (error: any) {
+      console.error("Update role error:", error);
       retries++;
       if (retries === maxRetries) {
         throw new Error(error.response?.data?.message || 'Failed to update role after multiple attempts');

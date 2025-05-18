@@ -83,10 +83,10 @@ export function Sidebar({
           {!isCollapsed && (
             <Image
               src="/logo.png"
-              height={60}
-              width={60}
-              alt="SchoolNet Logo"
-              className="h-10 w-20"
+              alt="logo"
+              width={100}
+              height={100}
+              style={{ width: "auto", height: "auto" }}
             />
           )}
           <button
@@ -173,10 +173,10 @@ export function Sidebar({
         <div className="flex items-center justify-between">
           <Image
             src="/logo.png"
-            height={60}
-            width={60}
-            alt="SchoolNet Logo"
-            className="h-10 w-20"
+            alt="logo"
+            width={100}
+            height={100}
+            style={{ width: "auto", height: "auto" }}
           />
           <button
             onClick={onMobileMenuClose}

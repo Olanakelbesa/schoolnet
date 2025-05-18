@@ -6,67 +6,101 @@ import { useDispatch, useSelector } from "react-redux";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { School, Users } from "lucide-react";
-import { updateUserRole, updateRole } from "@/redux/slices/authSlice";
-import Cookies from "js-cookie";
+import {
+  updateUserRole,
+  updateRole,
+  setRoleUpdateRetries,
+} from "@/redux/slices/authSlice";
 import { RootState } from "@/redux/store";
 
 export default function RoleSelection() {
   const router = useRouter();
   const dispatch = useDispatch();
-  // Get user and token from Redux or cookies
   const user = useSelector((state: RootState) => state.auth.user);
-  const token =
-    useSelector((state: RootState) => state.auth.token) ||
-    Cookies.get("auth_token");
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  console.log("Role Selection - Current user from Redux:", user);
+
   const [selectedRole, setSelectedRole] = useState<"parent" | "school" | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
+  // Check if user should be on this page
+  useEffect(() => {
+    console.log("Role Selection - User:", user);
+    if (user?.role && user.role !== "user") {
+      console.log("Role Selection - User already has role:", user.role);
+      if (user.role === "parent") {
+        router.push("/parentquestionnaire");
+      } else if (user.role === "school") {
+        router.push("/school-dashboard");
+      }
+    }
+  }, [user, router]);
 
   const handleRoleSelection = async (role: "parent" | "school") => {
+    console.log("Role Selection - Starting role selection for:", role);
     setSelectedRole(role);
     setIsLoading(true);
     setError(null);
+    setRetryCount(0);
+
     try {
       if (!token) throw new Error("No authentication token found");
 
-      // Update the role in the backend (pass token)
+      // Update the role in the backend
       const response = await updateRole(role);
-      console.log("Role updated successfully:", response);
+      console.log("Role Selection - Role updated successfully:", response);
 
-      // Update Redux state with the new role
-      dispatch(updateUserRole(role));
-      console.log(
-        "Redux state updated with new role:",
-        response.data.user.role
-      );
+      // Update Redux state with the new role from backend response
+      if (response?.data?.user) {
+        console.log(
+          "Role Selection - Updating Redux with user:",
+          response.data.user
+        );
+        dispatch(updateUserRole(response.data.user.role));
+        dispatch(setRoleUpdateRetries(0));
 
-      const updatedUser = response?.user ? response.user : { ...user, role };
-      console.log("Updated user:", updatedUser);
-      Cookies.set(
-        "user_info",
-        encodeURIComponent(JSON.stringify(updatedUser)),
-        { path: "/" }
-      );
-      console.log("Updated user info cookie:", updatedUser);
-
-      // Redirect based on role
-      if (role === "parent") {
-        router.push("/parentquestionnaire");
-      } else if (role === "school") {
-        router.push("/school-dashboard");
+        // Redirect based on role from backend response
+        if (response.data.user.role === "parent") {
+          console.log("Role Selection - Redirecting to parent questionnaire");
+          // Force a hard navigation to ensure the page reloads
+          window.location.href = "/parentquestionnaire";
+        } else if (response.data.user.role === "school") {
+          console.log("Role Selection - Redirecting to school dashboard");
+          window.location.href = "/school-dashboard";
+        }
+      } else {
+        console.log("Role Selection - No user data in response:", response);
+        setError("Failed to update role. Please try again.");
       }
     } catch (error) {
-      console.error("Error updating role:", error);
-      setError(
-        error instanceof Error
-          ? `Failed to update role: ${error.message}`
-          : "Failed to update role. Please try again."
-      );
+      console.error("Role Selection - Error updating role:", error);
+      setRetryCount((prev) => prev + 1);
+      dispatch(setRoleUpdateRetries(retryCount + 1));
+
+      if (retryCount >= 1) {
+        setError(
+          error instanceof Error
+            ? `Failed to update role after multiple attempts: ${error.message}`
+            : "Failed to update role. Please try again later."
+        );
+      } else {
+        setError(
+          error instanceof Error
+            ? `Failed to update role: ${error.message}. Retrying...`
+            : "Failed to update role. Retrying..."
+        );
+        // Retry automatically after 1 second
+        setTimeout(() => handleRoleSelection(role), 1000);
+      }
     } finally {
-      setIsLoading(false);
+      if (retryCount >= 1) {
+        setIsLoading(false);
+      }
     }
   };
 
