@@ -77,20 +77,20 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-3.5 border-b">
             {!isCollapsed && (
-              <div className="flex items-center">
-                <Link href="/dashboard">
-                  <Image
-                    src="/logo.png"
-                    alt="logo"
-                    width={100}
-                    height={100}
-                    style={{ width: "auto", height: "auto" }}
-                  />
-                </Link>
-              </div>
-            )}
+                <div className="flex items-center">
+                  <Link href="/dashboard">
+                    <Image
+                      src="/logo.png"
+                      alt="logo"
+                      width={63}
+                      height={63}
+                      style={{ width: "auto", height: "auto" }}
+                    />
+                  </Link>
+                </div>
+              )}
             <button
               onClick={onToggle}
               className="hidden lg:flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100"

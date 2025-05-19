@@ -84,7 +84,7 @@ export default function SchoolCard({
               </div>
             </div>
 
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm lg:w-2/3 text-gray-600">
               {description}
               <button className="text-purple-600 hover:text-purple-800 font-medium ml-1">
                 Read all {reviewCount} reviews

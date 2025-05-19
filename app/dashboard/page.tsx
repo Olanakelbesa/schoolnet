@@ -1,6 +1,4 @@
-import { MainDashboard } from "../components/Dashboard/main-dashboard";
-import { Sidebar } from "../components/Dashboard/sidebar";
-import { ProfileSidebar } from "../components/Dashboard/profile-sidebar";
+
 import ParentDashboard from "../components/ParentDashboard/ParentDashboard";
 
 export default function Dashboard() {

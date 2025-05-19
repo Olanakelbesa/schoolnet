@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
@@ -12,6 +12,13 @@ import SchoolCategoryCard from "@/app/components/ParentDashboard/SchoolCategoryC
 import SchoolCard from "@/app/components/ParentDashboard/SchoolCard";
 import SchoolGrid from "@/app/components/ParentDashboard/SchoolGrid";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { fetchParentProfile } from "@/redux/slices/parentSlice";
+import {
+  setSelectedType,
+  setSelectedLocation,
+  clearCategoryFilters,
+} from "@/redux/slices/schoolSlice";
 
 interface SubcitySchools {
   name: string;
@@ -45,33 +52,60 @@ export default function ParentDashboard() {
     schools,
     loading: schoolsLoading,
     error: schoolsError,
+    filteredSchools,
+    categories,
   } = useSelector((state: RootState) => state.schools);
 
- 
+  // State for subcity schools pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const schoolsPerPage = 4;
+
+  // Fetch parent profile on component mount
+  useEffect(() => {
+    dispatch(fetchParentProfile());
+  }, [dispatch]);
+
+  // Update filters when profile changes
+  useEffect(() => {
+    if (profile) {
+      // Clear existing filters
+      dispatch(clearCategoryFilters());
+
+      // Set school type filter for "Schools near you"
+      if (profile.childrenDetails?.schoolType?.length > 0) {
+        dispatch(setSelectedType(profile.childrenDetails.schoolType[0]));
+      }
+
+      // Set location filter for both sections
+      if (profile.address?.subCity) {
+        dispatch(setSelectedLocation(profile.address.subCity));
+      }
+    }
+  }, [profile, dispatch]);
 
   // School category data
   const schoolCategories = [
     {
       title: "Primary schools",
-      icon: "/images/primary-school.png",
+      icon: "/primary-school.png",
       bgColor: "bg-purple-100",
       iconColor: "text-purple-700",
     },
     {
       title: "Middle schools",
-      icon: "/images/middle-school.png",
+      icon: "/middle-school.png",
       bgColor: "bg-blue-100",
       iconColor: "text-blue-700",
     },
     {
       title: "High schools",
-      icon: "/images/high-school.png",
+      icon: "/high-school.png",
       bgColor: "bg-indigo-100",
       iconColor: "text-indigo-700",
     },
     {
       title: "University and colleges",
-      icon: "/images/university.png",
+      icon: "/university.png",
       bgColor: "bg-blue-100",
       iconColor: "text-blue-700",
     },
@@ -85,55 +119,48 @@ export default function ParentDashboard() {
     type: school.schoolType,
     students: school.studentCount,
     rating: 4.5,
-    imageUrl: school.images?.[0] || "/images/placeholder.svg", // Use school image if available, otherwise use placeholder
+    imageUrl: school.images?.[0] || "/images/placeholder.svg",
   });
 
-  // Filter schools based on subcity and schoolType for "Schools near you"
+  // Get nearby schools (top 3) - using filtered schools which already has both type and location filters
   const getNearbySchools = () => {
-    if (!profile || !schools) return [];
-
-    return schools
-      .filter((school: School) => {
-        // Check if school is in parent's subcity and matches school type
-        const isInParentSubcity =
-          school.address[0]?.subCity.toLowerCase() ===
-          profile.address?.subCity.toLowerCase();
-        const matchesSchoolType = profile.childrenDetails?.schoolType?.some(
-          (type: string) =>
-            school.schoolType.toLowerCase() === type.toLowerCase()
-        );
-
-        return isInParentSubcity && matchesSchoolType;
-      })
-      .slice(0, 5); // Get top 5 schools
+    return Array.isArray(filteredSchools) ? filteredSchools.slice(0, 3) : [];
   };
 
-  // Filter schools based on subcity only for "Schools by Subcity"
+  // Get schools by subcity - using only location filter
   const getSchoolsBySubcity = () => {
-    if (!profile || !schools) return [];
+    if (!profile?.address?.subCity) return [];
 
-    // Use parent's subcity for grouping schools
-    const parentSubcity = profile.address?.subCity;
-    if (!parentSubcity) return [];
-
+    // Filter schools by subcity only
     const schoolsInSubcity = schools.filter(
       (school) =>
-        school.address[0]?.subCity.toLowerCase() === parentSubcity.toLowerCase()
+        school.address[0]?.subCity.toLowerCase() ===
+        profile.address.subCity.toLowerCase()
     );
 
     if (schoolsInSubcity.length === 0) return [];
 
     return [
       {
-        name: parentSubcity,
+        name: profile.address.subCity,
         schoolCount: schoolsInSubcity.length,
-        schools: schoolsInSubcity.slice(0, 4),
+        schools: schoolsInSubcity,
       },
     ];
   };
 
   const nearbySchools = getNearbySchools();
   const schoolsBySubcity = getSchoolsBySubcity();
+
+  // Calculate pagination for subcity schools
+  const getPaginatedSchools = (schools: School[]) => {
+    const startIndex = (currentPage - 1) * schoolsPerPage;
+    return schools.slice(startIndex, startIndex + schoolsPerPage);
+  };
+
+  const totalPages = schoolsBySubcity[0]?.schools
+    ? Math.ceil(schoolsBySubcity[0].schools.length / schoolsPerPage)
+    : 0;
 
   if (profileLoading || schoolsLoading) {
     return (
@@ -204,8 +231,9 @@ export default function ParentDashboard() {
                 ))
               ) : (
                 <div className="text-gray-500 text-center py-4">
-                  No schools found in {profile?.address?.subCity} matching your
-                  school type preferences
+                  {!profile
+                    ? "Please complete your profile to see schools near you"
+                    : `No schools found in ${profile.address?.subCity} matching your school type preferences`}
                 </div>
               )}
             </div>
@@ -241,13 +269,40 @@ export default function ParentDashboard() {
                   </div>
 
                   <SchoolGrid
-                    schools={subcity.schools.map(transformToSchoolInfo)}
+                    schools={getPaginatedSchools(subcity.schools).map(
+                      transformToSchoolInfo
+                    )}
                   />
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="flex items-center px-4">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
               <div className="text-gray-500 text-center py-4">
-                No schools found in {profile?.address?.subCity}
+                {!profile
+                  ? "Please complete your profile to see schools in your area"
+                  : `No schools found in ${profile.address?.subCity}`}
               </div>
             )}
           </div>

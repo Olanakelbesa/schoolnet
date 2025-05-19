@@ -13,6 +13,11 @@ interface ChildrenDetails {
 }
 
 export interface ParentProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  photo?: string;
   numberOfChildren: string;
   childrenDetails: ChildrenDetails;
   address: Address;
@@ -43,6 +48,15 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   withCredentials: true,
+});
+
+// Add request interceptor to include token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Add response interceptor for error handling
@@ -91,6 +105,43 @@ export const createParentProfileThunk = createAsyncThunk(
   }
 );
 
+// Fetch parent profile thunk
+export const fetchParentProfile = createAsyncThunk(
+  'parent/fetchProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/parentProfiles', {withCredentials: true});
+      console.log("Parent profile fetched successfully:", response.data);
+      return response.data.data.parentProfile;
+    } catch (error: any) {
+      console.error('Error fetching parent profile:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: error.config
+        });
+      }
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch parent profile');
+    }
+  }
+);
+
+// Update parent profile thunk
+export const updateParentProfile = createAsyncThunk(
+  'parent/updateProfile',
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const response = await api.patch('/parentProfiles', formData, {
+        withCredentials: true,
+      });
+      return response.data.data.parentProfile;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+    }
+  }
+);
+
 const parentSlice = createSlice({
   name: 'parent',
   initialState,
@@ -124,6 +175,34 @@ const parentSlice = createSlice({
       .addCase(createParentProfileThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || "Failed to create profile";
+      })
+      .addCase(fetchParentProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchParentProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+        state.hasCompletedQuestionnaire = !!action.payload;
+        state.error = null;
+      })
+      .addCase(fetchParentProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || "Failed to fetch profile";
+        state.profile = null;
+      })
+      .addCase(updateParentProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateParentProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+        state.error = null;
+      })
+      .addCase(updateParentProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to update profile';
       });
   },
 });

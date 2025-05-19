@@ -34,10 +34,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className="min-h-full">{children}</div>
+            <Footer />
           </div>
         </div>
       </div>
-      <Footer />
+      
     </>
   );
 }

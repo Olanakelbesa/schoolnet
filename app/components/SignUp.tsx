@@ -12,9 +12,10 @@ import {
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { signup } from "@/redux/slices/authSlice";
 import NotificationContainer from "./Notification";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 function SignUp() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -36,14 +37,14 @@ function SignUp() {
     }[]
   >([]);
   const router = useRouter();
-  const { data: session } = useSession();
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (session) {
+    if (isAuthenticated) {
       router.push("/login");
     }
-  }, [session, router]);
+  }, [isAuthenticated, router]);
 
   // Generate unique ID for notifications
   const generateId = () => Math.floor(Math.random() * 1000000);

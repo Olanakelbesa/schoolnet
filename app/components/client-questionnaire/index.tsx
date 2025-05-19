@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Step1Component from "./step1-component";
 import { useRouter } from "next/navigation";
-import { createParentProfile } from "@/redux/slices/parentSlice";
+import { createParentProfile, ParentProfile } from "@/redux/slices/parentSlice";
 
 export default function ClientQuestionnaire() {
   const router = useRouter();
@@ -104,7 +104,11 @@ export default function ClientQuestionnaire() {
         throw new Error("Please select at least one school type");
 
       // Format the data according to the API requirements
-      const profileData = {
+      const profileData: ParentProfile = {
+        firstName: "", // These will be filled in the settings page
+        lastName: "",
+        email: "",
+        phoneNumber: "",
         numberOfChildren:
           selectedChildCount === "More than two"
             ? "2+"

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { mockSchools } from '../mockData/schools';
 
 // Types
 interface Address {
@@ -39,11 +40,23 @@ export interface School {
 export interface SchoolState {
   schools: School[];
   filteredSchools: School[];
+  selectedSchool: School | null;
   loading: boolean;
   error: string | null;
   totalResults: number;
   currentPage: number;
   itemsPerPage: number;
+  favoriteIds: string[];
+  sortBy: {
+    field: 'name' | 'subCity' | 'schoolTags' | 'budgetMin' | 'budgetMax';
+    direction: 'asc' | 'desc';
+  };
+  categories: {
+    types: string[];
+    locations: string[];
+    selectedType: string;
+    selectedLocation: string;
+  };
   filters: {
     searchQuery: string;
     schoolType: string;
@@ -57,11 +70,23 @@ export interface SchoolState {
 const initialState: SchoolState = {
   schools: [],
   filteredSchools: [],
+  selectedSchool: null,
   loading: false,
   error: null,
   totalResults: 0,
   currentPage: 1,
-  itemsPerPage: 10,
+  itemsPerPage: 9,
+  favoriteIds: [],
+  sortBy: {
+    field: 'name',
+    direction: 'asc'
+  },
+  categories: {
+    types: [],
+    locations: [],
+    selectedType: 'all',
+    selectedLocation: 'all'
+  },
   filters: {
     searchQuery: '',
     schoolType: 'all',
@@ -71,36 +96,183 @@ const initialState: SchoolState = {
   lastFetched: null,
 };
 
-// Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 5 * 60 * 1000;
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: 'https://schoolnet-be.onrender.com/api/v1',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+});
 
-// Async thunk for fetching schools
-export const fetchSchools = createAsyncThunk(
-  'schools/fetchSchools',
-  async (_, { getState, rejectWithValue }) => {
+// Add request interceptor to include token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Async thunk for fetching all schools
+export const fetchAllSchools = createAsyncThunk(
+  'schools/fetchAll',
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState() as { schools: SchoolState };
-      const { lastFetched } = state.schools;
-
-      // Check if we have cached data that's still valid
-      if (lastFetched && Date.now() - lastFetched < CACHE_DURATION) {
-        return null; // Use cached data
+      const response = await api.get('/schools');
+      console.log('Raw API response:', response.data);
+      
+      if (!response.data?.data?.schools) {
+        console.error('No schools data in response');
+        return rejectWithValue('No schools data received from server');
       }
-
-      const response = await axios.get('/api/schools');
-      return response.data;
+      
+      return { data: response.data.data.schools };
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        // Handle token expiration
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch schools');
+      console.error('Error fetching schools:', error);
+      console.log('Using mock data instead');
+      return { data: mockSchools };
     }
   }
 );
 
-export const schoolSlice = createSlice({
+// Add new async thunk for fetching school by ID
+export const fetchSchoolById = createAsyncThunk(
+  'schools/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/schools/${id}`);
+      console.log('School fetched successfully:', response.data);
+      
+      if (!response.data?.data?.school) {
+        console.error('No school data in response');
+        return rejectWithValue('No school data received from server');
+      }
+      
+      return { data: response.data.data.school };
+    } catch (error: any) {
+      console.error('Error fetching school:', error);
+      console.log('Using mock data instead');
+      const mockSchool = mockSchools.find(school => school._id === id);
+      if (!mockSchool) {
+        return rejectWithValue('School not found');
+      }
+      return { data: mockSchool };
+    }
+  }
+);
+
+// Add filter schools thunk
+export const filterSchools = createAsyncThunk(
+  'schools/filter',
+  async (filterParams: {
+    address: {
+      city: string;
+      subCity: string;
+    };
+    budgetMin: number;
+    budgetMax: number;
+    schoolType: string[];
+    googleRatings: number;
+    gender: string;
+  }, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/schools/filter', filterParams);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to filter schools');
+    }
+  }
+);
+
+// Helper function to sort schools
+const sortSchools = (schools: School[], field: string, direction: 'asc' | 'desc') => {
+  return [...schools].sort((a, b) => {
+    let valueA, valueB;
+
+    switch (field) {
+      case 'name':
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+      case 'subCity':
+        valueA = a.address?.[0]?.subCity?.toLowerCase() || '';
+        valueB = b.address?.[0]?.subCity?.toLowerCase() || '';
+        break;
+      case 'schoolTags':
+        valueA = a.schoolTags?.[0]?.toLowerCase() || '';
+        valueB = b.schoolTags?.[0]?.toLowerCase() || '';
+        break;
+      case 'budgetMin':
+        valueA = a.budgetMin || 0;
+        valueB = b.budgetMin || 0;
+        break;
+      case 'budgetMax':
+        valueA = a.budgetMax || 0;
+        valueB = b.budgetMax || 0;
+        break;
+      default:
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+    }
+
+    if (direction === 'asc') {
+      return valueA > valueB ? 1 : -1;
+    } else {
+      return valueA < valueB ? 1 : -1;
+    }
+  });
+};
+
+// Helper function to apply filters
+function applyFilters(state: SchoolState) {
+  let filtered = [...state.schools];
+
+  // Apply search query filter
+  if (state.filters.searchQuery) {
+    const query = state.filters.searchQuery.toLowerCase();
+    filtered = filtered.filter(
+      (school) =>
+        school.name.toLowerCase().includes(query) ||
+        school.description?.toLowerCase().includes(query) ||
+        school.address?.some((addr) =>
+          addr.subCity.toLowerCase().includes(query)
+        )
+    );
+  }
+
+  // Apply school type filter
+  if (state.categories.selectedType !== 'all') {
+    filtered = filtered.filter(
+      (school) => school.schoolType?.toLowerCase() === state.categories.selectedType.toLowerCase()
+    );
+  }
+
+  // Apply location filter
+  if (state.categories.selectedLocation !== 'all') {
+    filtered = filtered.filter((school) =>
+      school.address?.some(
+        (addr) => addr.subCity?.toLowerCase() === state.categories.selectedLocation.toLowerCase()
+      )
+    );
+  }
+
+  // Apply budget range filter
+  filtered = filtered.filter(
+    (school) =>
+      school.budgetMin >= state.filters.budgetRange[0] &&
+      school.budgetMax <= state.filters.budgetRange[1]
+  );
+
+  // Apply sorting
+  filtered = sortSchools(filtered, state.sortBy.field, state.sortBy.direction);
+
+  state.filteredSchools = filtered;
+  state.totalResults = filtered.length;
+}
+
+const schoolSlice = createSlice({
   name: 'schools',
   initialState,
   reducers: {
@@ -132,76 +304,105 @@ export const schoolSlice = createSlice({
       state.currentPage = 1;
       applyFilters(state);
     },
-    setFilteredSchools: (state, action: PayloadAction<School[]>) => {
-      state.filteredSchools = action.payload;
-      state.loading = false;
-      state.error = null;
+    clearSelectedSchool: (state) => {
+      state.selectedSchool = null;
+    },
+    toggleFavorite: (state, action: PayloadAction<string>) => {
+      const index = state.favoriteIds.indexOf(action.payload);
+      if (index === -1) {
+        state.favoriteIds.push(action.payload);
+      } else {
+        state.favoriteIds.splice(index, 1);
+      }
+      // Save to localStorage
+      localStorage.setItem('favoriteSchools', JSON.stringify(state.favoriteIds));
+    },
+    setSortBy: (state, action: PayloadAction<{ field: 'name' | 'subCity' | 'schoolTags' | 'budgetMin' | 'budgetMax'; direction: 'asc' | 'desc' }>) => {
+      state.sortBy = action.payload;
+      state.schools = sortSchools(state.schools, action.payload.field, action.payload.direction);
+      state.filteredSchools = sortSchools(state.filteredSchools, action.payload.field, action.payload.direction);
+    },
+    loadFavorites: (state) => {
+      const savedFavorites = localStorage.getItem('favoriteSchools');
+      if (savedFavorites) {
+        state.favoriteIds = JSON.parse(savedFavorites);
+      }
+    },
+    setCategories: (state, action: PayloadAction<{ types: string[]; locations: string[] }>) => {
+      state.categories.types = action.payload.types;
+      state.categories.locations = action.payload.locations;
+    },
+    setSelectedType: (state, action: PayloadAction<string>) => {
+      state.categories.selectedType = action.payload;
+      state.currentPage = 1;
+      applyFilters(state);
+    },
+    setSelectedLocation: (state, action: PayloadAction<string>) => {
+      state.categories.selectedLocation = action.payload;
+      state.currentPage = 1;
+      applyFilters(state);
+    },
+    clearCategoryFilters: (state) => {
+      state.categories.selectedType = 'all';
+      state.categories.selectedLocation = 'all';
+      state.currentPage = 1;
+      applyFilters(state);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchSchools.pending, (state) => {
+      .addCase(fetchAllSchools.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchSchools.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.schools = action.payload.data.schools;
-          state.totalResults = action.payload.results;
-          state.lastFetched = Date.now();
-          applyFilters(state);
-        }
+      .addCase(fetchAllSchools.fulfilled, (state, action) => {
         state.loading = false;
+        state.schools = action.payload.data || [];
+        state.filteredSchools = action.payload.data || [];
+        state.totalResults = action.payload.data?.length || 0;
+        state.lastFetched = Date.now();
+
+        // Update categories when schools are fetched
+        const types = Array.from(new Set(action.payload.data?.map((school: School) => school.schoolType) || [])) as string[];
+        const locations = Array.from(new Set(action.payload.data?.map((school: School) => school.address?.[0]?.subCity) || [])).filter(Boolean) as string[];
+        state.categories.types = types;
+        state.categories.locations = locations;
       })
-      .addCase(fetchSchools.rejected, (state, action) => {
+      .addCase(fetchAllSchools.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload as string || 'Failed to fetch schools';
+      })
+      .addCase(fetchSchoolById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSchoolById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedSchool = action.payload.data;
+        state.error = null;
+      })
+      .addCase(fetchSchoolById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to fetch school';
+        state.selectedSchool = null;
+      })
+      .addCase(filterSchools.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(filterSchools.fulfilled, (state, action) => {
+        state.loading = false;
+        state.filteredSchools = action.payload.data || [];
+        state.totalResults = action.payload.data?.length || 0;
+        state.error = null;
+      })
+      .addCase(filterSchools.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to filter schools';
+        state.filteredSchools = [];
       });
   },
 });
-
-// Helper function to apply filters
-function applyFilters(state: SchoolState) {
-  let filtered = [...state.schools];
-
-  // Apply search query filter
-  if (state.filters.searchQuery) {
-    const query = state.filters.searchQuery.toLowerCase();
-    filtered = filtered.filter(
-      (school) =>
-        school.name.toLowerCase().includes(query) ||
-        school.description.toLowerCase().includes(query) ||
-        school.address.some((addr) =>
-          addr.subCity.toLowerCase().includes(query)
-        )
-    );
-  }
-
-  // Apply school type filter
-  if (state.filters.schoolType !== 'all') {
-    filtered = filtered.filter(
-      (school) => school.schoolType.toLowerCase() === state.filters.schoolType.toLowerCase()
-    );
-  }
-
-  // Apply budget range filter
-  filtered = filtered.filter(
-    (school) =>
-      school.budgetMin >= state.filters.budgetRange[0] &&
-      school.budgetMax <= state.filters.budgetRange[1]
-  );
-
-  // Apply location filter
-  if (state.filters.location !== 'all') {
-    filtered = filtered.filter((school) =>
-      school.address.some(
-        (addr) => addr.subCity.toLowerCase() === state.filters.location.toLowerCase()
-      )
-    );
-  }
-
-  state.filteredSchools = filtered;
-}
 
 export const {
   setSearchQuery,
@@ -210,7 +411,14 @@ export const {
   setLocation,
   setPage,
   clearFilters,
-  setFilteredSchools,
+  clearSelectedSchool,
+  toggleFavorite,
+  setSortBy,
+  loadFavorites,
+  setCategories,
+  setSelectedType,
+  setSelectedLocation,
+  clearCategoryFilters,
 } = schoolSlice.actions;
 
 export default schoolSlice.reducer; 

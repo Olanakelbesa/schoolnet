@@ -5,12 +5,12 @@ import heroimage from "@/public/image.png"
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#efeeff] py-8 md:py-16 lg:py-20 lg:pl-10">
+    <div className="relative w-full h-full lg:h-screen overflow-hidden bg-[#efeeff] py-8 md:py-16 lg:py-20 lg:pl-10">
       <div className="container mx-auto px-10">
         <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between">
           {/* Left content */}
-          <div className="mb-10 pt-16 max-w-lg lg:mb-0 lg:max-w-xl font-poppins space-x-6">
-            <h1 className="mb-4 text-3xl font-bold leading-14 tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
+          <div className="mb-10 pt-16 w-full  lg:mb-0 lg:max-w-xl font-poppins space-x-6">
+            <h1 className="mb-4 text-3xl font-bold  md:leading-14 tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
               Discover Your Child's Ideal School in Ethiopia—
               <span className="text-[#5a3b82] underline">Smart</span>,{" "}
               <span className="text-[#5a3b82] underline">Simple</span>,{" "}

@@ -10,7 +10,7 @@ import { Equalizer, FilterList } from "@mui/icons-material";
 import { IoFilter } from "react-icons/io5";
 import { useDispatch } from "react-redux";
 import { setSearchQuery } from "@/redux/slices/schoolSlice";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import debounce from "lodash/debounce";
 
 interface HeaderProps {
@@ -25,18 +25,25 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
   const [searchValue, setSearchValue] = useState("");
   const isSchoolDetailsPage = pathname.includes("/school-details/");
 
+  // Create a debounced search function
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       dispatch(setSearchQuery(value));
-      router.push(`/dashboard/search?q=${encodeURIComponent(value)}`);
-    }, 500),
-    [dispatch, router]
-  );
+    }, 300),
+    [dispatch]
+  ) as unknown as ((value: string) => void) & { cancel: () => void };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchValue(value);
-    debouncedSearch(value);
+  // Update search when value changes
+  useEffect(() => {
+    debouncedSearch(searchValue);
+    // Cleanup
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchValue, debouncedSearch]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value);
   };
 
   if (isSchoolDetailsPage) {
@@ -103,7 +110,7 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
                 placeholder="Search schools, locations, or categories..."
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg w-full focus:border-purple-500 focus:ring-purple-500"
                 value={searchValue}
-                onChange={handleSearchChange}
+                onChange={handleSearch}
               />
             </div>
           </div>

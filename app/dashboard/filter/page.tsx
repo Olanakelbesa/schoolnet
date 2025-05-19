@@ -14,7 +14,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/app/components/Footer";
 import { useDispatch } from "react-redux";
-import { setFilteredSchools } from "@/redux/slices/schoolSlice";
+import { AppDispatch } from "@/redux/store";
+import { filterSchools } from "@/redux/slices/schoolSlice";
 
 const priceRanges = {
   "<5,000 ETB": { min: 0, max: 5000 },
@@ -57,14 +58,28 @@ const filterRows = [
   "Location",
 ];
 
+interface FilterParams {
+  address: {
+    city: string;
+    subCity: string;
+  };
+  budgetMin: number;
+  budgetMax: number;
+  schoolType: string[];
+  googleRatings: number;
+  gender: string;
+}
+
 export default function FilterPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<
     Record<string, string | null>
   >({});
   const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOptionSelect = (filter: string, option: string) => {
     setSelectedOptions((prev) => ({ ...prev, [filter]: option }));
@@ -73,12 +88,19 @@ export default function FilterPage() {
 
   const handleShowResults = async () => {
     try {
-      // Map UI filters to API parameters
-      const filterParams: any = {
+      setIsLoading(true);
+      setError(null);
+
+      const filterParams: FilterParams = {
         address: {
           city: "Addis Ababa",
           subCity: selectedOptions["Location"] || "",
         },
+        budgetMin: 0,
+        budgetMax: 0,
+        schoolType: [],
+        googleRatings: 0,
+        gender: "",
       };
 
       // Handle price range
@@ -91,7 +113,7 @@ export default function FilterPage() {
 
       // Handle school type
       if (selectedOptions["School type"]) {
-        filterParams.schoolType = [selectedOptions["School type"]];
+        filterParams.schoolType = [selectedOptions["School type"] as string];
       }
 
       // Handle review/rating
@@ -105,28 +127,28 @@ export default function FilterPage() {
         filterParams.gender = selectedOptions["Gender"];
       }
 
-      console.log("Sending filter params:", filterParams);
-
-      const response = await fetch("/api/schools/filter", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(filterParams),
-      });
-
-      const data = await response.json();
-      console.log("Response data:", data);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch filtered schools");
+      // Validate required fields
+      if (!filterParams.address.subCity) {
+        throw new Error("Please select a location");
+      }
+      if (filterParams.schoolType.length === 0) {
+        throw new Error("Please select a school type");
+      }
+      if (filterParams.gender === "") {
+        throw new Error("Please select a gender");
       }
 
-      dispatch(setFilteredSchools(data.data));
-      router.push("/dashboard/filter-result");
-    } catch (error) {
-      console.error("Error applying filters:", error);
-      // Handle error (show error message to user)
+      const result = await dispatch(filterSchools(filterParams)).unwrap();
+
+      if (result.data && result.data.length > 0) {
+        router.push("/dashboard/filter-result");
+      } else {
+        setError("No schools found matching your criteria");
+      }
+    } catch (error: any) {
+      setError(error.message || "Failed to filter schools");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,6 +157,11 @@ export default function FilterPage() {
       <div className="pb-10 flex items-center justify-center">
         <div className="bg-white rounded-xl w-full max-w-xl mx-4 p-6 relative">
           <h2 className="text-4xl font-bold text-center mb-6">Filter</h2>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             {filterRows.map((row) => (
               <div
@@ -148,10 +175,11 @@ export default function FilterPage() {
             ))}
           </div>
           <button
-            className="mt-8 w-full bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white py-2 rounded-full transition"
+            className="mt-8 w-full bg-gradient-to-r from-[#3F3D56] to-[#B188E3] hover:from-[#B188E3] hover:to-[#3F3D56] text-white py-2 rounded-full transition disabled:opacity-50"
             onClick={handleShowResults}
+            disabled={isLoading}
           >
-            Show Results
+            {isLoading ? "Loading..." : "Show Results"}
           </button>
         </div>
 

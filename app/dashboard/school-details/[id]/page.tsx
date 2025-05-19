@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams, useRouter } from "next/navigation";
+import {
+  fetchSchoolById,
+  clearSelectedSchool,
+  School,
+  toggleFavorite,
+  loadFavorites,
+} from "@/redux/slices/schoolSlice";
+import { AppDispatch, RootState } from "@/redux/store";
 import Image from "next/image";
 import {
   MapPin,
@@ -11,68 +20,63 @@ import {
   Users,
   Building,
   GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { schoolImages } from "@/redux/mockData/images";
 
-interface School {
-  _id: string;
-  name: string;
-  email: string;
-  address: Array<{
-    city: string;
-    subCity: string;
-    _id: string;
-  }>;
-  phoneNumber: string;
-  schoolWebsite: string;
-  schoolType: string;
-  division: string[];
-  studentCount: number;
-  yearEstablished: number;
-  schoolFacilites: Array<{
-    name: string;
-    img_path: string[];
-    _id: string;
-  }>;
-  description: string;
-  schoolTags: string[];
-  socialMedia: any[];
-  budgetMin: number;
-  budgetMax: number;
-  gender?: string;
-}
+// Helper function to get all school images
+const getAllSchoolImages = (school: School) => {
+  // Use a placeholder image based on school ID
+  const index = parseInt(school._id) % schoolImages.length;
+  return [schoolImages[index]];
+};
 
 export default function SchoolDetailsPage() {
   const params = useParams();
-  const [school, setSchool] = useState<School | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    selectedSchool: school,
+    loading,
+    error,
+    favoriteIds,
+  } = useSelector((state: RootState) => state.schools);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [allImages, setAllImages] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchSchoolDetails = async () => {
+    const fetchSchool = async () => {
       try {
-        const response = await fetch(`/api/schools/${params.id}`);
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Redirect to login page if unauthorized
-            window.location.href = "/login";
-            return;
-          }
-          throw new Error("Failed to fetch school details");
-        }
-        const data = await response.json();
-        setSchool(data.data.school);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
+        await dispatch(fetchSchoolById(params.id as string)).unwrap();
+      } catch (error) {
+        console.error("Failed to fetch school:", error);
       }
     };
 
     if (params.id) {
-      fetchSchoolDetails();
+      fetchSchool();
     }
-  }, [params.id]);
+    dispatch(loadFavorites());
+  }, [dispatch, params.id]);
+
+  useEffect(() => {
+    if (school) {
+      setAllImages(getAllSchoolImages(school));
+    }
+  }, [school]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const previousImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + allImages.length) % allImages.length
+    );
+  };
 
   if (loading) {
     return (
@@ -84,14 +88,30 @@ export default function SchoolDetailsPage() {
     );
   }
 
-  if (error || !school) {
+  if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-red-600 mb-2">
-            {error || "School not found"}
+            Error loading school details
           </h3>
-          <Button onClick={() => window.history.back()} className="mt-4">
+          <p className="text-gray-600">{error}</p>
+          <Button onClick={() => router.back()} className="mt-4">
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!school) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            School not found
+          </h3>
+          <Button onClick={() => router.back()} className="mt-4">
             Go Back
           </Button>
         </div>
@@ -101,64 +121,117 @@ export default function SchoolDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{school.name}</h1>
-        <div className="flex items-center text-gray-600">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span>
-            {school.address[0]?.subCity}, {school.address[0]?.city}
-          </span>
-        </div>
+      {/* Header with back button and favorite */}
+      <div className="mb-8 flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="mb-4"
+        >
+          ← Back to Schools
+        </Button>
+        {school && (
+          <button
+            onClick={() => dispatch(toggleFavorite(school._id))}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <Heart
+              className={`h-6 w-6 ${
+                favoriteIds.includes(school._id)
+                  ? "fill-[#5a3b82] text-[#5a3b82]"
+                  : "text-gray-600"
+              }`}
+            />
+          </button>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - School Info */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">About the School</h2>
-            <p className="text-gray-600 mb-6">{school.description}</p>
+      {/* Image Gallery */}
+      <div className="mb-8">
+        {/* Main Image with Navigation */}
+        <div className="relative h-96 w-full mb-4 rounded-lg overflow-hidden">
+          <Image
+            src={allImages[currentImageIndex]}
+            alt={`${school.name} - Image ${currentImageIndex + 1}`}
+            fill
+            className="object-cover"
+            unoptimized={true}
+          />
+          {allImages.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                onClick={previousImage}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                onClick={nextImage}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          )}
+        </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="flex items-center">
-                <Users className="h-5 w-5 text-purple-700 mr-2" />
-                <span className="text-gray-600">Type: {school.schoolType}</span>
+        {/* Thumbnail Gallery */}
+        {allImages.length > 1 && (
+          <div className="grid grid-cols-4 gap-2">
+            {allImages.map((image, index) => (
+              <div
+                key={index}
+                className={`relative h-24 cursor-pointer rounded-lg overflow-hidden ${
+                  currentImageIndex === index ? "ring-2 ring-purple-700" : ""
+                }`}
+                onClick={() => setCurrentImageIndex(index)}
+              >
+                <Image
+                  src={image}
+                  alt={`${school.name} - Thumbnail ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized={true}
+                />
               </div>
-              <div className="flex items-center">
-                <Building className="h-5 w-5 text-purple-700 mr-2" />
-                <span className="text-gray-600">
-                  Students: {school.studentCount}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <GraduationCap className="h-5 w-5 text-purple-700 mr-2" />
-                <span className="text-gray-600">
-                  Est. {school.yearEstablished}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-gray-600">
-                  Gender: {school.gender || "Not specified"}
-                </span>
-              </div>
-            </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Contact Information
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <Phone className="h-5 w-5 text-purple-700 mr-2" />
-                  <span className="text-gray-600">{school.phoneNumber}</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-purple-700 mr-2" />
-                  <span className="text-gray-600">{school.email}</span>
-                </div>
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-purple-700 mr-2" />
+      {/* School Details */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Column */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">About</h2>
+            <p className="text-gray-600">{school.description}</p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Contact Information</h2>
+            <div className="space-y-3">
+              <div className="flex items-center text-gray-600">
+                <MapPin className="h-5 w-5 mr-2 text-purple-700" />
+                <span>
+                  {school.address?.[0]?.subCity}, {school.address?.[0]?.city}
+                </span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Phone className="h-5 w-5 mr-2 text-purple-700" />
+                <span>{school.phoneNumber}</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Mail className="h-5 w-5 mr-2 text-purple-700" />
+                <span>{school.email}</span>
+              </div>
+              {school.schoolWebsite && (
+                <div className="flex items-center text-gray-600">
+                  <Globe className="h-5 w-5 mr-2 text-purple-700" />
                   <a
                     href={school.schoolWebsite}
                     target="_blank"
@@ -168,72 +241,64 @@ export default function SchoolDetailsPage() {
                     {school.schoolWebsite}
                   </a>
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">School Information</h2>
+            <div className="space-y-3">
+              <div className="flex items-center text-gray-600">
+                <Building className="h-5 w-5 mr-2 text-purple-700" />
+                <span>Type: {school.schoolType}</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Users className="h-5 w-5 mr-2 text-purple-700" />
+                <span>Students: {school.studentCount}</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <GraduationCap className="h-5 w-5 mr-2 text-purple-700" />
+                <span>Established: {school.yearEstablished}</span>
               </div>
             </div>
           </div>
 
-          {/* Facilities */}
-          {school.schoolFacilites.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-xl font-semibold mb-4">Facilities</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {school.schoolFacilites.map((facility) => (
-                  <div key={facility._id} className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">{facility.name}</h3>
-                    {facility.img_path[0] && (
-                      <div className="relative h-48 w-full">
-                        <Image
-                          src={`/school.png`}
-                          alt={facility.name}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
-                      </div>
-                    )}
+          {school.schoolFacilites && school.schoolFacilites.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Facilities</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {school.schoolFacilites.map((facility: any) => (
+                  <div
+                    key={facility._id}
+                    className="bg-purple-50 p-4 rounded-lg"
+                  >
+                    <h3 className="font-medium text-gray-900">
+                      {facility.name}
+                    </h3>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Right Column - Additional Info */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold mb-4">School Details</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-gray-900">
-                  Annual Budget Range
-                </h3>
-                <p className="text-gray-600">
-                  ${school.budgetMin.toLocaleString()} - $
-                  {school.budgetMax.toLocaleString()}
-                </p>
+          {school.schoolTags && school.schoolTags.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Tags</h2>
+              <div className="flex flex-wrap gap-2">
+                {school.schoolTags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-              {school.division.length > 0 && (
-                <div>
-                  <h3 className="font-medium text-gray-900">Divisions</h3>
-                  <p className="text-gray-600">{school.division.join(", ")}</p>
-                </div>
-              )}
-              {school.schoolTags.length > 0 && (
-                <div>
-                  <h3 className="font-medium text-gray-900">Tags</h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {school.schoolTags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
