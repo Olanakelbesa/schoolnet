@@ -19,7 +19,7 @@ interface NotificationCenterSectionProps {
 
 export function NotificationCenterSection({ notifications }: NotificationCenterSectionProps) {
   return (
-    <div className="mt-8">
+    <div className="mt-8 w-full">
       <h2 className="mb-4 text-xl font-medium text-purple-500">Notification Center</h2>
       <div className="space-y-4">
         {notifications.map((notification) => (

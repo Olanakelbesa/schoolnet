@@ -5,7 +5,7 @@ import logo from "@/public/logo.png"
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white">
+    <footer className="bg-gray-800 text-white relative z-50">
       <div className="container mx-auto py-12 px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}

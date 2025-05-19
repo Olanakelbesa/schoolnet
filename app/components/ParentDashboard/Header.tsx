@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { setSearchQuery } from "@/redux/slices/schoolSlice";
 import { useCallback, useState, useEffect } from "react";
 import debounce from "lodash/debounce";
+import { AppDispatch } from "@/redux/store";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -21,13 +22,14 @@ interface HeaderProps {
 export default function Header({ onMenuClick, schoolName }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [searchValue, setSearchValue] = useState("");
   const isSchoolDetailsPage = pathname.includes("/school-details/");
 
   // Create a debounced search function
   const debouncedSearch = useCallback(
     debounce((value: string) => {
+      console.log("Dispatching search query:", value);
       dispatch(setSearchQuery(value));
     }, 300),
     [dispatch]
@@ -35,7 +37,9 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
 
   // Update search when value changes
   useEffect(() => {
-    debouncedSearch(searchValue);
+    if (searchValue !== undefined) {
+      debouncedSearch(searchValue);
+    }
     // Cleanup
     return () => {
       debouncedSearch.cancel();
@@ -43,7 +47,9 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
   }, [searchValue, debouncedSearch]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
+    const value = e.target.value;
+    console.log("Search input changed:", value);
+    setSearchValue(value);
   };
 
   if (isSchoolDetailsPage) {
@@ -132,12 +138,13 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
               <Bell className="h-5 w-5" />
             </button>
 
-            <button
+            <Link
+              href="/dashboard/profile"
               className="p-2 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-colors"
               aria-label="Profile"
             >
               <User className="h-5 w-5" />
-            </button>
+            </Link>
           </div>
         </div>
       </div>

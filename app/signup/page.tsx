@@ -1,13 +1,16 @@
-import React from 'react'
-import SignUp from '../components/SignUp'
-import JoinAsParentOrSchool from '../components/JoinAsParentOrSchool'
+import React from "react";
+import SignUp from "../components/SignUp";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 function page() {
   return (
     <div>
-        <SignUp/>
+      <Header />
+      <SignUp />
+      <Footer />
     </div>
-  )
+  );
 }
 
-export default page
+export default page;

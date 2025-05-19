@@ -5,10 +5,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Define the user interface
 interface User {
-  id: string;
+  _id: string;
   email: string;
-  phone?: string;
-  role?: string;
+  phoneNumber: string;
+  isVerifiedEmail: boolean;
+  role: string;
+  mfaEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
   onboardingCompleted?: boolean;
 }
 
@@ -25,6 +29,14 @@ interface AuthState {
   roleUpdateRetries: number;
 }
 
+// Helper function to get token from localStorage safely
+const getStoredToken = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token');
+  }
+  return null;
+};
+
 // Initial state
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -33,7 +45,7 @@ const initialState: AuthState = {
   error: null,
   verificationMessage: null,
   otpSent: false,
-  token: null,
+  token: getStoredToken(),
   passwordResetToken: null,
   roleUpdateRetries: 0,
 };
@@ -47,6 +59,9 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.error = null;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', action.payload.token);
+      }
     },
     clearAuth: (state) => {
       state.isAuthenticated = false;
@@ -220,6 +235,7 @@ export const updateOnboardingStatus = async (completed: boolean) => {
 export const login = async (email: string, password: string) => {
   try {
     const response = await api.post('/users/login', { email, password }, {withCredentials: true});
+    console.log("login thunk: ", response)
     
     return response.data;
   } catch (error: any) {

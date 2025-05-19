@@ -1,16 +1,17 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
-import { Navbar } from "../navbar";
-import { Sidebar } from "../sidebar";
+import { Navbar } from "@/app/components/School-Dashboard/navbar";
+import { Sidebar } from "@/app/components/School-Dashboard/sidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function SchoolDashboardLayout({
+  children,
+}: DashboardLayoutProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

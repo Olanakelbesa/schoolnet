@@ -11,7 +11,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NotificationContainer from "./Notification";
 import { login, setAuth } from "@/redux/slices/authSlice";
+import { fetchAllSchools } from "@/redux/slices/schoolSlice";
 import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import Cookies from "js-cookie";
 
 function Login() {
@@ -30,7 +32,7 @@ function Login() {
     }[]
   >([]);
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Generate unique ID for notifications
   const generateId = () => Math.floor(Math.random() * 1000000);
@@ -82,6 +84,11 @@ function Login() {
         console.log("Login response:", data);
         console.log("User role from response:", data.user.role);
 
+        // Store token in localStorage
+        localStorage.setItem("token", data.token);
+        // Store user data in localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+
         // Store in Redux
         dispatch(setAuth({ user: data.user, token: data.token }));
         console.log("Auth state after dispatch:", {
@@ -89,12 +96,20 @@ function Login() {
           token: data.token,
         });
 
+        // Fetch schools after successful login
+        try {
+          console.log("Fetching schools after login...");
+          const result = await dispatch(fetchAllSchools()).unwrap();
+          console.log("Schools fetched successfully:", result);
+        } catch (error) {
+          console.error("Error fetching schools:", error);
+        }
+
         addNotification("Login successful!", "success");
 
         // Redirect based on role from backend
         if (data.user.role === "user") {
           console.log("User role is 'user', redirecting to role selection");
-          // Use replace instead of push to prevent back navigation
           router.replace("/role-selection");
         } else if (data.user.role === "parent") {
           console.log("User role is 'parent', redirecting to dashboard");
@@ -124,7 +139,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col w-full">
+    <div className="min-h-screen flex flex-col w-full relative z-0">
       {/* Notifications */}
       <NotificationContainer
         notifications={notifications}
@@ -147,9 +162,7 @@ function Login() {
       <div className="flex flex-col lg:flex-row  gap-40 mx-auto w-full justify-center">
         <div className="flex flex-col justify-center items-center w-full lg:w-1/3 min-h-[600px] lg:min-h-screen">
           <div className="hidden lg:block">
-            <Link href={"/"} className="mx-auto w-1/2 pt-8">
-              <Image src={logo} alt="logo" width={200} height={200} />
-            </Link>
+            
             <h1 className="text-4xl font-bold">
               <span className="text-[#B188E3]">Welcome</span>
               <span> Back!</span>

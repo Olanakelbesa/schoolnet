@@ -33,7 +33,6 @@ import {
   Plus,
 } from "lucide-react"
 
-import { DashboardLayout } from "@/app/components/School-Dashboard/layout/dashbaord-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -49,7 +48,6 @@ import { InputWithIcon } from "@/app/components/School-profile/input-with-icon"
 import { FacilityCheckboxList } from "@/app/components/School-profile/facility-checkbox-list"
 import { PhotoUpload } from "@/app/components/School-profile/photo-upload"
 
-// Define facility options
 const facilityOptions = [
   { id: "library", label: "Library", icon: <BookOpen className="h-4 w-4" /> },
   { id: "cafeteria", label: "Cafeteria", icon: <Utensils className="h-4 w-4" /> },
@@ -364,7 +362,7 @@ export default function SchoolProfile() {
   }, [formData, facilityPhotos])
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-medium text-purple-500">School Profile</h1>
@@ -759,6 +757,6 @@ export default function SchoolProfile() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </>
   )
 }

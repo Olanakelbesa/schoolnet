@@ -18,6 +18,7 @@ import {
   setSelectedType,
   setSelectedLocation,
   clearCategoryFilters,
+  fetchAllSchools,
 } from "@/redux/slices/schoolSlice";
 
 interface SubcitySchools {
@@ -60,26 +61,61 @@ export default function ParentDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const schoolsPerPage = 4;
 
-  // Fetch parent profile on component mount
+  // Fetch parent profile and schools on component mount
   useEffect(() => {
+    console.log("Fetching parent profile and schools...");
     dispatch(fetchParentProfile());
-  }, [dispatch]);
+
+    // Check if we need to fetch schools
+    if (!schools || schools.length === 0) {
+      console.log("No schools found, fetching schools...");
+      dispatch(fetchAllSchools())
+        .unwrap()
+        .then((result: { data: School[] }) => {
+          console.log("Schools fetched successfully:", result);
+        })
+        .catch((error: Error) => {
+          console.error("Error fetching schools:", error);
+        });
+    } else {
+      console.log("Schools already loaded:", schools.length);
+    }
+  }, [dispatch, schools]);
 
   // Update filters when profile changes
   useEffect(() => {
     if (profile) {
+      console.log("Profile data:", {
+        schoolTypes: profile.childrenDetails?.schoolType,
+        subCity: profile.address?.subCity,
+      });
+
       // Clear existing filters
       dispatch(clearCategoryFilters());
 
       // Set school type filter for "Schools near you"
       if (profile.childrenDetails?.schoolType?.length > 0) {
-        dispatch(setSelectedType(profile.childrenDetails.schoolType[0]));
+        // Use all school types from the profile
+        const schoolTypes = profile.childrenDetails.schoolType.map((type) =>
+          type.toLowerCase()
+        );
+        console.log("Setting school type filters:", schoolTypes);
+        // Set the first type as the selected type
+        dispatch(setSelectedType(schoolTypes[0]));
+      } else {
+        console.log("No school types found in profile");
       }
 
       // Set location filter for both sections
       if (profile.address?.subCity) {
-        dispatch(setSelectedLocation(profile.address.subCity));
+        const subCity = profile.address.subCity.toLowerCase();
+        console.log("Setting location filter:", subCity);
+        dispatch(setSelectedLocation(subCity));
+      } else {
+        console.log("No subcity found in profile");
       }
+    } else {
+      console.log("No profile data available");
     }
   }, [profile, dispatch]);
 
@@ -124,19 +160,52 @@ export default function ParentDashboard() {
 
   // Get nearby schools (top 3) - using filtered schools which already has both type and location filters
   const getNearbySchools = () => {
-    return Array.isArray(filteredSchools) ? filteredSchools.slice(0, 3) : [];
+    console.log("Getting nearby schools:", {
+      filteredSchools,
+      isArray: Array.isArray(filteredSchools),
+      length: filteredSchools?.length,
+    });
+
+    if (!Array.isArray(filteredSchools)) {
+      console.log("filteredSchools is not an array");
+      return [];
+    }
+    return filteredSchools.slice(0, 3);
   };
 
   // Get schools by subcity - using only location filter
   const getSchoolsBySubcity = () => {
-    if (!profile?.address?.subCity) return [];
+    if (!profile?.address?.subCity) {
+      console.log("No subcity in profile");
+      return [];
+    }
+
+    console.log("Getting schools by subcity:", {
+      schools,
+      isArray: Array.isArray(schools),
+      length: schools?.length,
+      profileSubCity: profile.address.subCity,
+    });
+
+    if (!Array.isArray(schools)) {
+      console.log("schools is not an array");
+      return [];
+    }
 
     // Filter schools by subcity only
     const schoolsInSubcity = schools.filter(
       (school) =>
-        school.address[0]?.subCity.toLowerCase() ===
+        school.address?.[0]?.subCity?.toLowerCase() ===
         profile.address.subCity.toLowerCase()
     );
+
+    console.log("Schools in subcity:", {
+      count: schoolsInSubcity.length,
+      schools: schoolsInSubcity.map((s) => ({
+        name: s.name,
+        subCity: s.address?.[0]?.subCity,
+      })),
+    });
 
     if (schoolsInSubcity.length === 0) return [];
 
@@ -151,6 +220,14 @@ export default function ParentDashboard() {
 
   const nearbySchools = getNearbySchools();
   const schoolsBySubcity = getSchoolsBySubcity();
+
+  console.log("Final results:", {
+    nearbySchools: nearbySchools.map((s) => s.name),
+    schoolsBySubcity: schoolsBySubcity.map((s) => ({
+      name: s.name,
+      count: s.schoolCount,
+    })),
+  });
 
   // Calculate pagination for subcity schools
   const getPaginatedSchools = (schools: School[]) => {

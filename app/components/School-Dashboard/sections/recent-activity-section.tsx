@@ -23,7 +23,7 @@ export function RecentActivitySection({
   onLearnHow,
 }: RecentActivitySectionProps) {
   return (
-    <div className="mt-8">
+    <div className="mt-8 w-full">
       <h2 className="mb-4 text-xl font-medium text-purple-500">Recent Activity</h2>
 
       {hasActivity && activities.length > 0 ? (

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { RootState } from '../store';
 
 // Define interfaces
 interface Address {
@@ -52,7 +53,10 @@ const api = axios.create({
 
 // Add request interceptor to include token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Get the token from the Redux store
+  const state = (window as any).__REDUX_STATE__;
+  const token = state?.auth?.token;
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -108,15 +112,27 @@ export const createParentProfileThunk = createAsyncThunk(
 // Fetch parent profile thunk
 export const fetchParentProfile = createAsyncThunk(
   'parent/fetchProfile',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const response = await api.get('/parentProfiles', {withCredentials: true});
+      const state = getState() as RootState;
+      const token = state.auth.token;
+
+      const response = await api.get('/parentProfiles', {
+        withCredentials: true,
+        
+      });
       console.log("Parent profile fetched successfully:", response.data);
       return response.data.data.parentProfile;
     } catch (error: any) {
-      console.error('Error fetching parent profile:', error);
+      console.error('Error fetching parent profile:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.config?.headers
+      });
+      
       if (axios.isAxiosError(error)) {
-        console.error('Error details:', {
+        console.error('Axios error details:', {
           status: error.response?.status,
           data: error.response?.data,
           config: error.config
@@ -135,8 +151,10 @@ export const updateParentProfile = createAsyncThunk(
       const response = await api.patch('/parentProfiles', formData, {
         withCredentials: true,
       });
+      console.log("Update profile API response:", response.data);
       return response.data.data.parentProfile;
     } catch (error: any) {
+      console.error("Update profile API error:", error.response?.data || error);
       return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
     }
   }
