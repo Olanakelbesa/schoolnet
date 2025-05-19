@@ -4,6 +4,7 @@ import { MenuIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
+import logo from "../../public/logo.png";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -40,15 +41,15 @@ function Navbar() {
         <div className="flex justify-between w-full">
           <Link href={"/"}>
             <Image
-              src={"/schoolnet-logo.svg"}
+              src={logo}
               alt="logo"
-              width={150}
-              height={150}
+              width={120}
+              height={120}
               className="mx-auto"
             />
           </Link>
 
-          <div className="gap-10 items-center hidden md:flex lg:gap-12">
+          <div className="gap-10 items-center hidden lg:flex lg:gap-12">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
@@ -60,7 +61,7 @@ function Navbar() {
             ))}
           </div>
 
-          <div className="gap-10 items-center hidden md:flex lg:gap-4">
+          <div className="gap-10 items-center hidden lg:flex lg:gap-4">
             {authLinks.map((link) => (
               <Link
                 key={link.label}
@@ -74,12 +75,12 @@ function Navbar() {
         </div>
 
         <div>
-          <MenuIcon className="md:hidden cursor-pointer" onClick={toggleMenu} />
+          <MenuIcon className="lg:hidden cursor-pointer" onClick={toggleMenu} />
         </div>
         <div
           className={`${
             isMenuOpen ? "block" : "hidden"
-          } absolute top-20 left-0 w-full bg-[#efeeff] shadow-md md:hidden`}
+          } absolute top-20 left-0 w-full bg-[#efeeff] shadow-md lg:hidden`}
         >
           <ul className="flex flex-col items-center gap-4 py-4">
             {navLinks.map((link) => (

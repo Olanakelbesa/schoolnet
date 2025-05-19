@@ -1,13 +1,18 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { LockOutlined } from "@mui/icons-material";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
-import NotificationContainer from "../Notification";
+import { resetPassword } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { addNotification } from "@/redux/slices/notificationSlice";
 
 export default function SetNewPassword() {
+  const router = useRouter();
+  const dispatch = useDispatch();
   const [password, setPassword] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -15,35 +20,7 @@ export default function SetNewPassword() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPwdError, setConfirmPwdError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [notifications, setNotifications] = useState<
-    {
-      id: number;
-      message: string;
-      type: "success" | "error" | "warning" | "info";
-    }[]
-  >([]);
-
-  // Generate unique ID for notifications
-  const generateId = () => Math.floor(Math.random() * 1000000);
-
-  // Add notification with optional auto-dismiss
-  const addNotification = (
-    message: string,
-    type: "success" | "error" | "warning" | "info"
-  ) => {
-    const id = generateId();
-    setNotifications((prev) => [...prev, { id, message, type }]);
-    if (type !== "error") {
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 5000);
-    }
-  };
-
-  // Remove notification
-  const removeNotification = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
+  const [email, setEmail] = useState<string>("");
 
   const validatePassword = (value: string) => {
     if (!value.trim()) return "Password is required";
@@ -54,6 +31,16 @@ export default function SetNewPassword() {
     if (!value.trim()) return "Confirm password is required";
     return value === original ? "" : "Passwords do not match";
   };
+
+  useEffect(() => {
+    // Get email from localStorage
+    const storedEmail = localStorage.getItem("resetEmail");
+    if (!storedEmail) {
+      router.push("/forgot-pwd"); // Redirect if no email found
+      return;
+    }
+    setEmail(storedEmail);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,14 +55,45 @@ export default function SetNewPassword() {
     if (!passwordValidation && !confirmValidation) {
       setIsSubmitting(true);
       try {
-        // Here you would typically call your API to set the new password
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        addNotification("Password updated successfully", "success");
-        // Redirect or show success message
-      } catch (error) {
-        addNotification(
-          "Failed to set new password. Please try again.",
-          "error"
+        if (!email) {
+          throw new Error(
+            "Email not found. Please start the password reset process again."
+          );
+        }
+
+        console.log("Submitting password reset with data:", {
+          email,
+          newPassword: password,
+          passwordConfirm: confirmPwd,
+        });
+
+        const response = await resetPassword({
+          email: email,
+          newPassword: password,
+          passwordConfirm: confirmPwd,
+        });
+        console.log("Password reset response:", response);
+
+        // Clear stored data after successful password reset
+        localStorage.removeItem("resetEmail");
+        localStorage.removeItem("resetToken");
+
+        dispatch(
+          addNotification({
+            message: "Password updated successfully",
+            type: "success",
+            duration: 5000,
+          })
+        );
+        router.push("/login");
+      } catch (error: any) {
+        dispatch(
+          addNotification({
+            message:
+              error.message || "Failed to set new password. Please try again.",
+            type: "error",
+            duration: 5000,
+          })
         );
       } finally {
         setIsSubmitting(false);
@@ -90,12 +108,6 @@ export default function SetNewPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Notifications */}
-      <NotificationContainer
-        notifications={notifications}
-        onClose={removeNotification}
-      />
-
       {/* Background image */}
       <div
         className="absolute inset-0 bg-custom-bg-image bg-cover bg-center bg-no-repeat opacity-100"

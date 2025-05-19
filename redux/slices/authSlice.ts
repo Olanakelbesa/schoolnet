@@ -1,86 +1,42 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Define the user interface
 interface User {
   id: string;
   email: string;
   phone?: string;
+  role?: string;
+  onboardingCompleted?: boolean;
 }
 
 // Define the auth state interface
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null;
   loading: boolean;
   error: string | null;
-  verificationMessage: string | null; // To store signup/verification messages
+  verificationMessage: string | null;
+  otpSent: boolean;
+  token: string | null;
+  passwordResetToken: string | null;
+  roleUpdateRetries: number;
 }
 
 // Initial state
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
-  token: null,
   loading: false,
   error: null,
   verificationMessage: null,
+  otpSent: false,
+  token: null,
+  passwordResetToken: null,
+  roleUpdateRetries: 0,
 };
-
-// Async thunk for login
-export const login = createAsyncThunk(
-  'auth/login',
-  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
-    try {
-      const response = await axios.post('https://schoolnet-be.onrender.com/api/v1/users/login', credentials);
-      console.log("login response", response.data);
-      return response.data; // Expect { user: { id, email, phone? }, token }
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
-    }
-  }
-);
-
-// Async thunk for signup
-export const signup = createAsyncThunk(
-  'auth/signup',
-  async (
-    userData: { email: string; password: string; phoneNumber: string; passwordConfirm: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await axios.post('https://schoolnet-be.onrender.com/api/v1/users/signup', userData);
-      console.log("signup response", response.data);
-      return response.data; 
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Signup failed');
-    }
-  }
-);
-
-// Async thunk for email verification
-export const verifyEmail = createAsyncThunk(
-  'auth/verifyEmail',
-  async (token: string, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        'https://schoolnet-be.onrender.com/api/v1/users/verifyEmail',
-        { token }
-      );
-      console.log("verifyEmail response", response.data);
-      return response.data; // Expect { status: "success", message: "Email verified...", user, token }
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Email verification failed');
-    }
-  }
-);
-
-// Async thunk for logout
-export const logout = createAsyncThunk('auth/logout', async () => {
-  // Optional: Call API to invalidate token
-  return true;
-});
 
 const authSlice = createSlice({
   name: 'auth',
@@ -95,68 +51,202 @@ const authSlice = createSlice({
     clearAuth: (state) => {
       state.isAuthenticated = false;
       state.user = null;
-      state.token = null;
       state.error = null;
       state.verificationMessage = null;
+      state.otpSent = false;
+      state.token = null;
+      localStorage.removeItem('token'); // Clear token from localStorage on logout
     },
-  },
-  extraReducers: (builder) => {
-    // Login
-    builder
-      .addCase(login.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(login.fulfilled, (state, action: PayloadAction<{ user: User; token: string }>) => {
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.loading = false;
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Signup
-      .addCase(signup.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.verificationMessage = null;
-      })
-      .addCase(signup.fulfilled, (state, action: PayloadAction<{ status: string; message: string }>) => {
-        state.loading = false;
-        state.verificationMessage = action.payload.message; // Store message for display
-      })
-      .addCase(signup.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Verify Email
-      .addCase(verifyEmail.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(verifyEmail.fulfilled, (state, action: PayloadAction<{ user: User; token: string; message: string }>) => {
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.loading = false;
-        state.verificationMessage = action.payload.message;
-      })
-      .addCase(verifyEmail.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Logout
-      .addCase(logout.fulfilled, (state) => {
-        state.isAuthenticated = false;
-        state.user = null;
-        state.token = null;
-        state.error = null;
-        state.verificationMessage = null;
-      });
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
+    setVerificationMessage: (state, action: PayloadAction<string | null>) => {
+      state.verificationMessage = action.payload;
+    },
+    setOtpSent: (state, action: PayloadAction<boolean>) => {
+      state.otpSent = action.payload;
+    },
+    updateUserRole: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.role = action.payload;
+      }
+    },
+    setRoleUpdateRetries: (state, action: PayloadAction<number>) => {
+      state.roleUpdateRetries = action.payload;
+    },
+    setOnboardingCompleted: (state, action: PayloadAction<boolean>) => {
+      if (state.user) {
+        state.user.onboardingCompleted = action.payload;
+      }
+    },
   },
 });
 
-export const { setAuth, clearAuth } = authSlice.actions;
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true, // Enable credentials for all requests
+  headers: {
+    'Content-Type': 'application/json', // Set default Content-Type
+  },
+});
+
+// Async thunk for signup
+export const signup = async (userData: {
+  email: string;
+  password: string;
+  phoneNumber: string;
+  passwordConfirm: string
+}) => {
+  try {
+    const response = await api.post('/users/signup', userData);
+    // Store token in Redux state if provided in response
+    if (response.data.token) {
+      return { ...response.data, token: response.data.token };
+    }
+    console.log("sign up response: ", response);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Signup failed');
+  }
+};
+
+// Async thunk for verifying OTP
+export const verifyOtp = async (data: { email: string; otp: string }) => {
+  try {
+    const response = await api.patch('/users/verifyEmail', data);
+    return response.data;
+  } catch (error: any) {
+    console.error('OTP verification error:', error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message ||
+      error.message ||
+      'OTP verification failed'
+    );
+  }
+};
+
+// Async thunk for forgot password
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await api.post('/users/forgotPassword', { email });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Forgot password request failed');
+  }
+};
+
+// Async thunk for verifying OTP for password reset
+export const verifyForgotResetOtp = async (data: { email: string; otp: string }) => {
+  try {
+    const response = await api.patch('/users/verifyForgotResetOtp', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'OTP verification for password reset failed');
+  }
+};
+
+// Async thunk for resetting password
+export const resetPassword = async (data: { email: string; newPassword: string; passwordConfirm: string }) => {
+  try {
+    const passwordResetToken = localStorage.getItem('passwordResetToken');
+    
+    if (!passwordResetToken) {
+      throw new Error('Password reset token not found');
+    }
+
+    const requestData = {
+      passwordResetToken,
+      password: data.newPassword,
+      passwordConfirm: data.passwordConfirm
+    };
+    console.log("Sending reset password request with data:", requestData);
+
+    const response = await api.patch('/users/resetPassword', requestData);
+    console.log("Reset password response:", response);
+    
+    // Clear the password reset token after successful reset
+    localStorage.removeItem('passwordResetToken');
+    return response.data;
+  } catch (error: any) {
+    console.error("Reset password error:", error);
+    throw new Error(error.response?.data?.message || 'Password reset failed');
+  }
+};
+
+// Async thunk for updating user role with retry logic
+export const updateRole = async (role: string) => {
+  let retries = 0;
+  const maxRetries = 2;
+
+  while (retries < maxRetries) {
+    try {
+      const response = await api.patch('/users/updateRole', 
+        { role }, 
+        {
+          withCredentials: true
+        }
+      );
+      console.log("Update role response:", response);
+      return response.data;
+    } catch (error: any) {
+      console.error("Update role error:", error);
+      retries++;
+      if (retries === maxRetries) {
+        throw new Error(error.response?.data?.message || 'Failed to update role after multiple attempts');
+      }
+      // Wait for 1 second before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+};
+
+// Async thunk for updating onboarding status
+export const updateOnboardingStatus = async (completed: boolean) => {
+  try {
+    const response = await api.patch('/users/updateOnboardingStatus', { onboardingCompleted: completed }, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update onboarding status');
+  }
+};
+
+// Async thunk for login
+export const login = async (email: string, password: string) => {
+  try {
+    const response = await api.post('/users/login', { email, password }, {withCredentials: true});
+    
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Login failed');
+  }
+};
+
+export const logout = async () => {
+  try {
+    const response = await api.post('/users/logout', {}, { withCredentials: true });
+    console.log("Logout response:", response);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Logout failed');
+  }
+};
+
+export const {
+  setAuth,
+  clearAuth,
+  setLoading,
+  setError,
+  setVerificationMessage,
+  setOtpSent,
+  updateUserRole,
+  setRoleUpdateRetries,
+  setOnboardingCompleted
+} = authSlice.actions;
+
 export default authSlice.reducer;

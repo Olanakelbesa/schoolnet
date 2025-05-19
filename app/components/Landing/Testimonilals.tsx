@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import React, { useState } from "react";
+import profilepic from "@/public/images/profilepic.jpg";
+
 
 export default function Testimonials() {
   const testimonials = [
@@ -9,31 +11,31 @@ export default function Testimonials() {
       id: 1,
       quote: "SchoolNet helped me find the perfect school for my daughter! The AI recommendations were spot on.",
       author: "Abeba T.",
-      avatar: "/images/profilepic.jpg",
+      avatar: (profilepic ),
     },
     {
       id: 2,
       quote: "The verified school profiles made it easy to choose the best option for my son.",
       author: "Kebede M.",
-      avatar: "/images/profilepic.jpg",
+      avatar: (profilepic ),
     },
     {
       id: 3,
       quote: "I loved the user-friendly interface and the detailed reviews from other parents.",
       author: "Sara L.",
-      avatar: "/images/profilepic.jpg",
+      avatar: (profilepic ),
     },
     {
       id: 4,
       quote: "SchoolNet is a game-changer for parents looking for the best schools in Ethiopia.",
       author: "Mulugeta G.",
-      avatar: "/images/profilepic.jpg",
+      avatar: (profilepic ),
     },
     {
       id: 5,
       quote: "The AI-powered recommendations saved me so much time. Highly recommend it!",
       author: "Hana B.",
-      avatar: "/images/profilepic.jpg",
+      avatar: (profilepic ),
     },
   ];
 

@@ -28,11 +28,11 @@ const mockData = [
 
 function ChooseSection() {
   return (
-    <div id="about">
+    <div id="about" className="">
       <h1 className="w-full flex justify-center pt-20 pb-10 text-center text-xl md:text-4xl font-bold">
         Why Choose SchoolNet?
       </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 px-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 md:px-20">
         {mockData.map((item) => (
           <Card
             key={item.id}

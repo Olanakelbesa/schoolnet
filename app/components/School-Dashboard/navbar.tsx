@@ -18,16 +18,16 @@ export function Navbar({
   onMobileMenuClick,
 }: NavbarProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-[#f7f3fc] px-6">
+    <header className="flex w-full h-16 items-center justify-between border-b bg-[#f7f3fc] px-6">
       <div className="flex items-center gap-4">
         <button
           onClick={onMobileMenuClick}
-          className="rounded-full p-1 hover:bg-purple-100 md:hidden"
+          className="rounded-full p-1 hover:bg-purple-100 lg:hidden"
         >
           <Menu className="h-5 w-5 text-[#B188E3]" />
           <span className="sr-only">Open menu</span>
         </button>
-        <h1 className="hidden md:block text-lg font-medium text-purple-500">
+        <h1 className="text-lg font-medium text-purple-500">
           Welcome, {userName}
         </h1>
       </div>
@@ -38,10 +38,7 @@ export function Navbar({
         </button>
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 border">
-            <AvatarImage
-              src={userAvatar || "/dandiboru.jpg"}
-              alt={userName}
-            />
+            <AvatarImage src={userAvatar || "/dandiboru.jpg"} alt={userName} />
             <AvatarFallback>
               {userName
                 .split(" ")

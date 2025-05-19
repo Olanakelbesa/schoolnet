@@ -29,10 +29,10 @@ export function ParentConnectionsCard({
     <Card className="flex flex-col justify-between bg-[#b188e3]/10 shadow-md shadow-[#b188e3]/30 ">
       <div className="w-full flex justify-between pr-8">
         <CardHeader className="pb-2 w-full ">
-          <CardDescription className="text-sm text-purple-400">
+          <CardDescription className="text-sm text-[#5a3b82]">
             Connections
           </CardDescription>
-          <CardTitle className="text-lg text-purple-700">
+          <CardTitle className="text-lg text-[#5a3b82]">
             Parent Connections
           </CardTitle>
         </CardHeader>

@@ -1,34 +1,31 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Providers } from "./providers";
 
-
-import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
-import './globals.css';
-import ReduxProvider from './Provider';
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  variable: '--font-poppins',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'SchooNet',
-  description: 'Discover Your Child’s Ideal School in Ethiopia',
-  icons: {
-    icon: '/logo-white.png',
-  },
+  title: "SchoolNet",
+  description: "SchoolNet - Your School Management System",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className={poppins.variable}>
-        <ReduxProvider>{children}</ReduxProvider>
+      <head>
+        <link
+          rel="preload"
+          href="/_next/static/css/app/layout.css"
+          as="style"
+        />
+      </head>
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -1,10 +1,10 @@
 import React from 'react'
-import VerifyEmail from '../components/VerifyEmail'
+import OtpVerification from '../components/ForgotPwd/otp-verification'
 
 function page() {
   return (
     <div>
-        <VerifyEmail/>
+        <OtpVerification/>
     </div>
   )
 }
