@@ -136,7 +136,7 @@ function SignUp() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col relative z-0">
       {/* Notifications */}
       <NotificationContainer
         notifications={notifications}
@@ -170,9 +170,7 @@ function SignUp() {
 
         <div className="flex flex-col justify-center items-center w-full lg:w-1/3 min-h-[700px] lg:min-h-screen login-form-container pb-20">
           <div className="hidden lg:block mx-auto">
-            <Link href={"/"} className="mx-auto w-1/2 py-5 flex justify-center">
-              <Image src={logo} alt="logo" width={150} height={150} />
-            </Link>
+            
             <h1 className="text-4xl font-bold pt-6">
               <span className="text-[#B188E3]">Create</span>{" "}
               <span>Account</span>

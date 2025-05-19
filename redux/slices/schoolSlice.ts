@@ -35,6 +35,7 @@ export interface School {
   createdAt: string;
   updatedAt: string;
   gender?: string;
+  profile_image?: string;
 }
 
 export interface SchoolState {
@@ -104,6 +105,9 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  validateStatus: function (status) {
+    return status >= 200 && status < 500;
+  },
 });
 
 // Add request interceptor to include token
@@ -112,14 +116,37 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers['Access-Control-Allow-Origin'] = '*';
+  config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+  config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
   return config;
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error('API Error Response:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      console.error('API Error Request:', error.request);
+    } else {
+      console.error('API Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Async thunk for fetching all schools
 export const fetchAllSchools = createAsyncThunk(
   'schools/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching schools from API...');
       const response = await api.get('/schools');
       console.log('Raw API response:', response.data);
       
@@ -128,7 +155,17 @@ export const fetchAllSchools = createAsyncThunk(
         return rejectWithValue('No schools data received from server');
       }
       
-      return { data: response.data.data.schools };
+      const schools = response.data.data.schools;
+      console.log('Schools fetched successfully:', {
+        count: schools.length,
+        sample: schools.slice(0, 2).map((s: { name: any; schoolType: any; address: { subCity: any; }[]; }) => ({
+          name: s.name,
+          type: s.schoolType,
+          subCity: s.address?.[0]?.subCity
+        }))
+      });
+      
+      return { data: schools };
     } catch (error: any) {
       console.error('Error fetching schools:', error);
       console.log('Using mock data instead');
@@ -186,6 +223,55 @@ export const filterSchools = createAsyncThunk(
   }
 );
 
+// Add createSchool action
+export const createSchool = createAsyncThunk(
+  'schools/create',
+  async (schoolData: Partial<School>, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/schools', schoolData, {
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating school:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: error.config
+        });
+      }
+      return rejectWithValue(error.response?.data?.message || 'Failed to create school');
+    }
+  }
+);
+
+// Add updateSchool action
+export const updateSchool = createAsyncThunk(
+  'schools/update',
+  async (schoolData: Partial<School>, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/schools/${schoolData._id}`, schoolData, {withCredentials: true});
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update school');
+    }
+  }
+);
+
+// Add fetchSchoolProfile action
+export const fetchSchoolProfile = createAsyncThunk(
+  'schools/fetchProfile',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/schools/profile');
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch school profile');
+    }
+  }
+);
+
 // Helper function to sort schools
 const sortSchools = (schools: School[], field: string, direction: 'asc' | 'desc') => {
   return [...schools].sort((a, b) => {
@@ -227,35 +313,85 @@ const sortSchools = (schools: School[], field: string, direction: 'asc' | 'desc'
 
 // Helper function to apply filters
 function applyFilters(state: SchoolState) {
+  console.log('Applying filters:', {
+    totalSchools: state.schools.length,
+    searchQuery: state.filters.searchQuery,
+    selectedType: state.categories.selectedType,
+    selectedLocation: state.categories.selectedLocation
+  });
+
   let filtered = [...state.schools];
 
   // Apply search query filter
   if (state.filters.searchQuery) {
-    const query = state.filters.searchQuery.toLowerCase();
+    const query = state.filters.searchQuery.toLowerCase().trim();
+    console.log('Applying search filter:', query);
+    
     filtered = filtered.filter(
-      (school) =>
-        school.name.toLowerCase().includes(query) ||
-        school.description?.toLowerCase().includes(query) ||
-        school.address?.some((addr) =>
-          addr.subCity.toLowerCase().includes(query)
-        )
+      (school) => {
+        const matchesName = school.name.toLowerCase().includes(query);
+        const matchesDescription = school.description?.toLowerCase().includes(query) || false;
+        const matchesSubCity = school.address?.some(
+          (addr) => addr.subCity?.toLowerCase().includes(query)
+        ) || false;
+        const matchesSchoolType = school.schoolType?.toLowerCase().includes(query) || false;
+
+        const matches = matchesName || matchesDescription || matchesSubCity || matchesSchoolType;
+        
+        if (matches) {
+          console.log('School matches search:', {
+            name: school.name,
+            type: school.schoolType,
+            subCity: school.address?.[0]?.subCity
+          });
+        }
+        
+        return matches;
+      }
     );
+    
+    console.log('After search filter:', {
+      count: filtered.length,
+      sample: filtered.slice(0, 2).map(s => ({
+        name: s.name,
+        type: s.schoolType,
+        subCity: s.address?.[0]?.subCity
+      }))
+    });
   }
 
   // Apply school type filter
   if (state.categories.selectedType !== 'all') {
+    const selectedType = state.categories.selectedType.toLowerCase();
+    console.log('Filtering by school type:', selectedType);
     filtered = filtered.filter(
-      (school) => school.schoolType?.toLowerCase() === state.categories.selectedType.toLowerCase()
+      (school) => school.schoolType?.toLowerCase() === selectedType
     );
+    console.log('After school type filter:', {
+      count: filtered.length,
+      sample: filtered.slice(0, 2).map(s => ({
+        name: s.name,
+        type: s.schoolType
+      }))
+    });
   }
 
   // Apply location filter
   if (state.categories.selectedLocation !== 'all') {
+    const selectedLocation = state.categories.selectedLocation.toLowerCase();
+    console.log('Filtering by location:', selectedLocation);
     filtered = filtered.filter((school) =>
       school.address?.some(
-        (addr) => addr.subCity?.toLowerCase() === state.categories.selectedLocation.toLowerCase()
+        (addr) => addr.subCity?.toLowerCase() === selectedLocation
       )
     );
+    console.log('After location filter:', {
+      count: filtered.length,
+      sample: filtered.slice(0, 2).map(s => ({
+        name: s.name,
+        subCity: s.address?.[0]?.subCity
+      }))
+    });
   }
 
   // Apply budget range filter
@@ -267,6 +403,14 @@ function applyFilters(state: SchoolState) {
 
   // Apply sorting
   filtered = sortSchools(filtered, state.sortBy.field, state.sortBy.direction);
+
+  console.log("Final filter results:", {
+    searchQuery: state.filters.searchQuery,
+    selectedType: state.categories.selectedType,
+    selectedLocation: state.categories.selectedLocation,
+    filteredCount: filtered.length,
+    totalSchools: state.schools.length
+  });
 
   state.filteredSchools = filtered;
   state.totalResults = filtered.length;
@@ -400,6 +544,48 @@ const schoolSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string || 'Failed to filter schools';
         state.filteredSchools = [];
+      })
+      .addCase(createSchool.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createSchool.fulfilled, (state, action) => {
+        state.loading = false;
+        state.schools.push(action.payload.data.school);
+        state.filteredSchools = state.schools;
+      })
+      .addCase(createSchool.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateSchool.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateSchool.fulfilled, (state, action) => {
+        state.loading = false;
+        state.schools = state.schools.map(school =>
+          school._id === action.payload.data.school._id ? action.payload.data.school : school
+        );
+        state.filteredSchools = state.schools;
+      })
+      .addCase(updateSchool.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchSchoolProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSchoolProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedSchool = action.payload.data;
+        state.error = null;
+      })
+      .addCase(fetchSchoolProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || 'Failed to fetch school profile';
+        state.selectedSchool = null;
       });
   },
 });

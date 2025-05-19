@@ -1,7 +1,6 @@
 "use client";
 import { MessageSquare } from "lucide-react";
 
-import { DashboardLayout } from "@/app/components/School-Dashboard/layout/dashbaord-layout";
 import { ParentConnectionsCard } from "@/app/components/School-Dashboard/cards/parent-connections-card";
 import { UnreadMessagesCard } from "@/app/components/School-Dashboard/cards/unread-messages-card";
 import { ProfileCompletionCard } from "@/app/components/School-Dashboard/cards/profile-completion-card";
@@ -69,9 +68,9 @@ export default function Dashboard() {
   };
 
   return (
-    <DashboardLayout>
+    <div className=" w-full">
+      {/* Card Components */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Card Components */}
         <ParentConnectionsCard {...parentConnections} />
         <UnreadMessagesCard
           count={unreadMessages.count}
@@ -84,13 +83,15 @@ export default function Dashboard() {
       </div>
 
       {/* Section Components */}
-      <RecentActivitySection
-        hasActivity={false}
-        onCreatePost={handleCreatePost}
-        onLearnHow={handleLearnHow}
-      />
+      <div className="flex flex-col gap-6 w-full h-full">
+        <RecentActivitySection
+          hasActivity={false}
+          onCreatePost={handleCreatePost}
+          onLearnHow={handleLearnHow}
+        />
 
-      <NotificationCenterSection notifications={notifications} />
-    </DashboardLayout>
+        <NotificationCenterSection notifications={notifications} />
+      </div>
+    </div>
   );
 }

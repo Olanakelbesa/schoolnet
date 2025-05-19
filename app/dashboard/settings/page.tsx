@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { Loader2, Camera, Mail, Phone } from "lucide-react";
 import Image from "next/image";
 import { updateParentProfile } from "@/redux/slices/parentSlice";
+import NotificationContainer from "../../components/Notification";
 
 // Constants
 const GRADE_LEVELS = ["primary", "middle", "high"];
@@ -88,6 +89,35 @@ export default function SettingsPage() {
     email: "",
     phoneNumber: "",
   });
+  const [notifications, setNotifications] = useState<
+    {
+      id: number;
+      message: string;
+      type: "success" | "error" | "warning" | "info";
+    }[]
+  >([]);
+
+  // Generate unique ID for notifications
+  const generateId = () => Math.floor(Math.random() * 1000000);
+
+  // Add notification with optional auto-dismiss
+  const addNotification = (
+    message: string,
+    type: "success" | "error" | "warning" | "info"
+  ) => {
+    const id = generateId();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    if (type !== "error") {
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 5000);
+    }
+  };
+
+  // Remove notification
+  const removeNotification = (id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   // Load profile data
   useEffect(() => {
@@ -302,15 +332,18 @@ export default function SettingsPage() {
 
       // Update profile using Redux thunk
       const resultAction = await dispatch(updateParentProfile(formDataToSend));
+      console.log("Update profile result:", resultAction);
 
       if (updateParentProfile.fulfilled.match(resultAction)) {
-        toast.success("Profile updated successfully");
+        console.log("Profile update successful:", resultAction.payload);
+        addNotification("Profile updated successfully", "success");
         setIsEditing(false);
       } else {
+        console.error("Profile update failed:", resultAction.payload);
         throw new Error(resultAction.payload as string);
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to update profile");
+      addNotification(error.message || "Failed to update profile", "error");
       console.error(error);
     } finally {
       setIsUpdating(false);
@@ -335,6 +368,12 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Notifications */}
+      <NotificationContainer
+        notifications={notifications}
+        onClose={removeNotification}
+      />
+
       <Tabs defaultValue="profile" className="max-w-4xl mx-auto">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile">Profile</TabsTrigger>
