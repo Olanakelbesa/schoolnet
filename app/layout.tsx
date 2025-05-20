@@ -23,6 +23,7 @@ export default function RootLayout({
           href="/_next/static/css/app/layout.css"
           as="style"
         />
+        <link rel="icon" href="/logo-white.png" type="image/png" />
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
