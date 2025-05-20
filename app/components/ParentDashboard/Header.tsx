@@ -52,47 +52,6 @@ export default function Header({ onMenuClick, schoolName }: HeaderProps) {
     setSearchValue(value);
   };
 
-  if (isSchoolDetailsPage) {
-    return (
-      <header className="bg-white shadow-sm rounded-t-2xl border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          {/* Centered navigation */}
-          <nav className="flex-1 flex justify-center space-x-16">
-            <Link
-              href="#academics"
-              className="font-semibold text-gray-900 hover:text-purple-700"
-            >
-              Academics
-            </Link>
-            <Link
-              href="#admissions"
-              className="font-semibold text-gray-900 hover:text-purple-700"
-            >
-              Admissions
-            </Link>
-            <Link
-              href="#fees"
-              className="font-semibold text-gray-900 hover:text-purple-700"
-            >
-              Fees
-            </Link>
-            <Link
-              href="#staff"
-              className="font-semibold text-gray-900 hover:text-purple-700"
-            >
-              Staff
-            </Link>
-            <Link
-              href="#analytics"
-              className="font-semibold text-gray-900 hover:text-purple-700"
-            >
-              Analytics
-            </Link>
-          </nav>
-        </div>
-      </header>
-    );
-  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b">
