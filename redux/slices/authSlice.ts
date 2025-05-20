@@ -232,7 +232,7 @@ export const updateOnboardingStatus = async (completed: boolean) => {
 export const login = async (email: string, password: string) => {
   try {
     console.log("Login data: ", { email, password });
-    console.log("api:", api)
+    console.log("BASE_URLllll:", BASE_URL)
     const response = await api.post('/users/login', { email, password });
     console.log("login thunk: ", response)
     
