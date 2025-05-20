@@ -104,9 +104,6 @@ const authSlice = createSlice({
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true, // Enable credentials for all requests
-  headers: {
-    'Content-Type': 'application/json', // Set default Content-Type
-  },
 });
 
 // Async thunk for signup
@@ -117,12 +114,12 @@ export const signup = async (userData: {
   passwordConfirm: string
 }) => {
   try {
+    console.log("api:", api)
     const response = await api.post('/users/signup', userData);
-    // Store token in Redux state if provided in response
+    
     if (response.data.token) {
       return { ...response.data, token: response.data.token };
     }
-    console.log("sign up response: ", response);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Signup failed');
@@ -234,7 +231,9 @@ export const updateOnboardingStatus = async (completed: boolean) => {
 // Async thunk for login
 export const login = async (email: string, password: string) => {
   try {
-    const response = await api.post('/users/login', { email, password }, {withCredentials: true});
+    console.log("Login data: ", { email, password });
+    console.log("api:", api)
+    const response = await api.post('/users/login', { email, password });
     console.log("login thunk: ", response)
     
     return response.data;
