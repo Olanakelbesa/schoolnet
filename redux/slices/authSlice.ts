@@ -114,7 +114,6 @@ export const signup = async (userData: {
   passwordConfirm: string
 }) => {
   try {
-    console.log("api:", api)
     const response = await api.post('/users/signup', userData);
     
     if (response.data.token) {
@@ -132,7 +131,6 @@ export const verifyOtp = async (data: { email: string; otp: string }) => {
     const response = await api.patch('/users/verifyEmail', data);
     return response.data;
   } catch (error: any) {
-    console.error('OTP verification error:', error.response?.data || error.message);
     throw new Error(
       error.response?.data?.message ||
       error.message ||
@@ -175,16 +173,13 @@ export const resetPassword = async (data: { email: string; newPassword: string; 
       password: data.newPassword,
       passwordConfirm: data.passwordConfirm
     };
-    console.log("Sending reset password request with data:", requestData);
 
     const response = await api.patch('/users/resetPassword', requestData);
-    console.log("Reset password response:", response);
     
     // Clear the password reset token after successful reset
     localStorage.removeItem('passwordResetToken');
     return response.data;
   } catch (error: any) {
-    console.error("Reset password error:", error);
     throw new Error(error.response?.data?.message || 'Password reset failed');
   }
 };
@@ -202,10 +197,8 @@ export const updateRole = async (role: string) => {
           withCredentials: true
         }
       );
-      console.log("Update role response:", response);
       return response.data;
     } catch (error: any) {
-      console.error("Update role error:", error);
       retries++;
       if (retries === maxRetries) {
         throw new Error(error.response?.data?.message || 'Failed to update role after multiple attempts');
@@ -231,10 +224,9 @@ export const updateOnboardingStatus = async (completed: boolean) => {
 // Async thunk for login
 export const login = async (email: string, password: string) => {
   try {
-    console.log("Login data: ", { email, password });
-    console.log("BASE_URLllll:", BASE_URL)
+
     const response = await api.post('/users/login', { email, password });
-    console.log("login thunk: ", response)
+
     
     return response.data;
   } catch (error: any) {
@@ -245,7 +237,6 @@ export const login = async (email: string, password: string) => {
 export const logout = async () => {
   try {
     const response = await api.post('/users/logout', {}, { withCredentials: true });
-    console.log("Logout response:", response);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Logout failed');
