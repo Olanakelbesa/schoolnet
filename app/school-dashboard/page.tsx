@@ -6,8 +6,10 @@ import { UnreadMessagesCard } from "@/app/components/School-Dashboard/cards/unre
 import { ProfileCompletionCard } from "@/app/components/School-Dashboard/cards/profile-completion-card";
 import { RecentActivitySection } from "@/app/components/School-Dashboard/sections/recent-activity-section";
 import { NotificationCenterSection } from "@/app/components/School-Dashboard/sections/notification-center-section";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter()
   // Sample data
   const parentConnections = {
     count: 16,
@@ -52,11 +54,11 @@ export default function Dashboard() {
 
   // Event handlers
   const handleViewInbox = () => {
-    console.log("View inbox clicked");
+    router.push("/school-dashboard/inbox")
   };
 
   const handleCompleteProfile = () => {
-    console.log("Complete profile clicked");
+    router.push("/school-dashboard/profile")
   };
 
   const handleCreatePost = () => {

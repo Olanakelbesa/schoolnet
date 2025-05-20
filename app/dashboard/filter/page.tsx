@@ -134,11 +134,10 @@ export default function FilterPage() {
       if (filterParams.schoolType.length === 0) {
         throw new Error("Please select a school type");
       }
-      if (filterParams.gender === "") {
-        throw new Error("Please select a gender");
-      }
+      console.log("filter data:" , filterParams)
 
       const result = await dispatch(filterSchools(filterParams)).unwrap();
+      console.log("filter result:", result)
 
       if (result.data && result.data.length > 0) {
         router.push("/dashboard/filter-result");

@@ -27,7 +27,7 @@ export function Navbar({
           <Menu className="h-5 w-5 text-[#B188E3]" />
           <span className="sr-only">Open menu</span>
         </button>
-        <h1 className="text-lg font-medium text-purple-500">
+        <h1 className={"text-lg font-medium text-purple-500 hidden lg:block"}>
           Welcome, {userName}
         </h1>
       </div>
@@ -36,7 +36,7 @@ export function Navbar({
           <Bell className="h-5 w-5 text-[#B188E3]" />
           <span className="sr-only">Notifications</span>
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center pr-4 lg:pr-10">
           <Avatar className="h-8 w-8 border">
             <AvatarImage src={userAvatar || "/dandiboru.jpg"} alt={userName} />
             <AvatarFallback>
@@ -46,10 +46,6 @@ export function Navbar({
                 .join("")}
             </AvatarFallback>
           </Avatar>
-          <div className="hidden md:block text-xs">
-            <div className="font-medium">{userName}</div>
-            <div className="text-gray-500">{userRole}</div>
-          </div>
         </div>
       </div>
     </header>

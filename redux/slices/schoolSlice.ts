@@ -101,26 +101,19 @@ const initialState: SchoolState = {
 const api = axios.create({
   baseURL: 'https://schoolnet-be.onrender.com/api/v1',
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  validateStatus: function (status) {
-    return status >= 200 && status < 500;
-  },
 });
 
 // Add request interceptor to include token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  config.headers['Access-Control-Allow-Origin'] = '*';
-  config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
-  config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-  return config;
-});
+// api.interceptors.request.use((config) => {
+//   const token = localStorage.getItem('token');
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   config.headers['Access-Control-Allow-Origin'] = '*';
+//   config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+//   config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+//   return config;
+// });
 
 // Add response interceptor for error handling
 api.interceptors.response.use(
@@ -147,7 +140,7 @@ export const fetchAllSchools = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       console.log('Fetching schools from API...');
-      const response = await api.get('/schools');
+      const response = await api.get('/schools', {withCredentials: true});
       console.log('Raw API response:', response.data);
       
       if (!response.data?.data?.schools) {
@@ -179,7 +172,7 @@ export const fetchSchoolById = createAsyncThunk(
   'schools/fetchById',
   async (id: string, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/schools/${id}`);
+      const response = await api.get(`/schools/${id}`, {withCredentials: true});
       console.log('School fetched successfully:', response.data);
       
       if (!response.data?.data?.school) {
@@ -228,9 +221,11 @@ export const createSchool = createAsyncThunk(
   'schools/create',
   async (schoolData: Partial<School>, { rejectWithValue }) => {
     try {
+      console.log('Creating school with data:', schoolData);
       const response = await api.post('/schools', schoolData, {
         withCredentials: true
       });
+      console.log('School created successfully:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('Error creating school:', error);
@@ -264,7 +259,7 @@ export const fetchSchoolProfile = createAsyncThunk(
   'schools/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/schools/profile');
+      const response = await api.get('/schools/profile', {withCredentials: true});
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch school profile');

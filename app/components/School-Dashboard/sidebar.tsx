@@ -119,19 +119,19 @@ export function Sidebar({
               isCollapsed={isCollapsed}
             />
             <NavItem
-              icon={<FileText className="h-5 w-5" />}
-              label="Posts"
-              active={activeTab === "posts"}
-              onClick={() => handleTabClick("posts")}
-              href="/posts"
+              icon={<BarChart3 className="h-5 w-5" />}
+              label="Inbox"
+              active={activeTab === "inbox"}
+              onClick={() => handleTabClick("inbox")}
+              href="/school-dashboard/inbox"
               isCollapsed={isCollapsed}
             />
             <NavItem
-              icon={<BarChart3 className="h-5 w-5" />}
-              label="Reports"
-              active={activeTab === "reports"}
-              onClick={() => handleTabClick("reports")}
-              href="/reports"
+              icon={<FileText className="h-5 w-5" />}
+              label="Report"
+              active={activeTab === "report"}
+              onClick={() => handleTabClick("report")}
+              href="/school-dashboard/reports"
               isCollapsed={isCollapsed}
             />
             <NavItem
@@ -139,7 +139,7 @@ export function Sidebar({
               label="Settings"
               active={activeTab === "settings"}
               onClick={() => handleTabClick("settings")}
-              href="/settings"
+              href="/school-dashboard/settings"
               isCollapsed={isCollapsed}
             />
           </div>
@@ -205,10 +205,10 @@ export function Sidebar({
             />
             <NavItem
               icon={<FileText className="h-5 w-5" />}
-              label="Posts"
-              active={activeTab === "posts"}
-              onClick={() => handleTabClick("posts")}
-              href="/posts"
+              label="Inbox"
+              active={activeTab === "inbox"}
+              onClick={() => handleTabClick("inbox")}
+              href="/school-dashboard/inbox"
               isCollapsed={false}
             />
             <NavItem
@@ -216,7 +216,7 @@ export function Sidebar({
               label="Reports"
               active={activeTab === "reports"}
               onClick={() => handleTabClick("reports")}
-              href="/reports"
+              href="/school-dashboard/reports"
               isCollapsed={false}
             />
             <NavItem

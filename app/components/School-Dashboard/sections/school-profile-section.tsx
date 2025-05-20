@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,7 +14,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -27,24 +26,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import {
-  updateSchool,
-  fetchSchoolProfile,
-} from "@/redux/slices/schoolSlice";
-import {
-  createSchool,
-  setFormData,
-  resetForm,
-  clearError
-} from "@/redux/slices/schoolCreateSlice";
+import { setFormData } from "@/redux/slices/schoolCreateSlice";
 import { useRouter } from "next/navigation";
-import {
-  Loader2,
-  Upload,
-  ArrowLeft,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -52,9 +36,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
+import axios from "axios";
 
 const SUB_CITIES = [
   "Arada",
@@ -128,21 +111,14 @@ export default function SchoolProfileSection() {
   const [facilityImages, setFacilityImages] = useState<Record<string, File[]>>(
     {}
   );
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileCompletion, setProfileCompletion] = useState(0);
 
-  const {
-    selectedSchool: schoolProfile,
-    loading: schoolLoading,
-    error: schoolError,
-  } = useSelector((state: RootState) => state.schools);
+  const { loading: schoolLoading, error: schoolError } = useSelector(
+    (state: RootState) => state.schools
+  );
 
-  const {
-    loading: createLoading,
-    error: createError,
-    success: createSuccess
-  } = useSelector((state: RootState) => state.schoolCreate);
+  const { loading: createLoading, error: createError } = useSelector(
+    (state: RootState) => state.schoolCreate
+  );
 
   const loading = schoolLoading || createLoading;
   const error = schoolError || createError;
@@ -157,66 +133,6 @@ export default function SchoolProfileSection() {
     },
   });
 
-  // Calculate profile completion percentage
-  const calculateProfileCompletion = (data: Partial<FormData>) => {
-    const requiredFields = [
-      "name",
-      "yearEstablished",
-      "schoolType",
-      "division",
-      "studentCount",
-      "email",
-      "phoneNumber",
-      "address.subCity",
-      "description",
-    ];
-
-    const completedFields = requiredFields.filter((field) => {
-      const value = field.includes(".")
-        ? (data as Record<string, any>)[field.split(".")[0]]?.[
-            field.split(".")[1]
-          ]
-        : data[field as keyof FormData];
-      return value !== undefined && value !== null && value !== "";
-    });
-
-    return Math.round((completedFields.length / requiredFields.length) * 100);
-  };
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const result = await dispatch(fetchSchoolProfile()).unwrap();
-        if (result.status === "success" && result.data) {
-          form.reset({
-            ...result.data,
-            schoolFacilites: result.data.schoolFacilites || [],
-          });
-          setSelectedFacilities(
-            result.data.schoolFacilites?.map((f: { name: string }) => f.name) ||
-              []
-          );
-          setIsEditing(true);
-          setProfileCompletion(calculateProfileCompletion(result.data));
-        }
-      } catch (error) {
-        console.error("Error fetching school profile:", error);
-        toast.error("Failed to fetch school profile");
-      }
-    };
-
-    fetchProfile();
-  }, [dispatch, form]);
-
-  // Update profile completion when form values change
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      const typedValue = value as Partial<FormData>;
-      setProfileCompletion(calculateProfileCompletion(typedValue));
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
   const handleFacilityChange = (facility: string, checked: boolean) => {
     setSelectedFacilities((prev) =>
       checked ? [...prev, facility] : prev.filter((f) => f !== facility)
@@ -230,123 +146,74 @@ export default function SchoolProfileSection() {
     }));
   };
 
-  const handleProfileImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfileImage(e.target.files[0]);
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     try {
       setIsSubmitting(true);
-      console.log("Starting form submission with data:", data);
 
-      // Validate profile image
-      if (!isEditing && !profileImage) {
-        toast.error("Please upload a profile image");
-        return;
-      }
+      // Build schoolFacilites as array of { name }
+      const schoolFacilites = selectedFacilities.map((facility) => ({
+        name: facility,
+      }));
 
-      // Convert facility images to base64
-      const schoolFacilites = await Promise.all(
-        selectedFacilities.map(async (facility) => {
-          const images = facilityImages[facility] || [];
-          const base64Images = await Promise.all(
-            images.map((file) => {
-              return new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  const base64 = reader.result as string;
-                  resolve(base64.split(",")[1]);
-                };
-                reader.readAsDataURL(file);
-              });
-            })
-          );
+      // Build facilities as array of image files (one per facility, order matches)
+      const facilities = selectedFacilities.map((facility) => {
+        const images = facilityImages[facility] || [];
+        return images[0] || null; // Only one image per facility
+      });
 
-          return {
-            name: facility,
-            img_path: base64Images,
-          };
-        })
+      // Prepare FormData for multipart/form-data
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("email", data.email);
+      formData.append("phoneNumber", data.phoneNumber);
+      formData.append("schoolWebsite", "");
+      formData.append("schoolType", data.schoolType);
+      formData.append("studentCount", String(data.studentCount));
+      formData.append("yearEstablished", String(data.yearEstablished));
+      formData.append("description", data.description);
+      formData.append("budgetMin", String(data.budgetMin));
+      formData.append("budgetMax", String(data.budgetMax));
+      formData.append("address[0][city]", data.address.city);
+      formData.append("address[0][subCity]", data.address.subCity);
+
+      data.division.forEach((div, idx) => {
+        formData.append(`division[${idx}]`, div);
+      });
+
+      schoolFacilites.forEach((facility, idx) => {
+        formData.append(`schoolFacilites[${idx}][name]`, facility.name);
+      });
+
+      facilities.forEach((file, idx) => {
+        if (file) {
+          formData.append("facilities", file); // field name must match backend
+        }
+      });
+
+      // Send using axios directly (not via Redux thunk)
+      const response = await axios.post(
+        "https://schoolnet-be.onrender.com/api/v1/schools",
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
       );
 
-      // Convert profile image to base64 if exists
-      let profileImageBase64 = "";
-      if (profileImage) {
-        profileImageBase64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result as string;
-            resolve(base64.split(",")[1]);
-          };
-          reader.readAsDataURL(profileImage);
-        });
-      }
-
-      // Structure the request body according to API expectations
-      const formData = {
-        school: {
-          name: data.name,
-          email: data.email,
-          address: [
-            {
-              city: data.address.city,
-              subCity: data.address.subCity,
-            },
-          ],
-          phoneNumber: data.phoneNumber,
-          schoolWebsite: "", // Add this field to your form if needed
-          schoolType: data.schoolType,
-          division: data.division,
-          studentCount: data.studentCount,
-          yearEstablished: data.yearEstablished,
-          schoolFacilites: schoolFacilites,
-          description: data.description,
-          budgetMin: data.budgetMin,
-          budgetMax: data.budgetMax,
-          profileImage: profileImageBase64 || schoolProfile?.profile_image,
-        },
-      };
-
-      console.log("Submitting form data:", formData);
-
-      let result;
-      if (isEditing) {
-        result = dispatch(setFormData(formData.school));
-  
-        console.log("Update school result:", result);
-      } else {
-        dispatch(setFormData(formData.school));
-        result = await dispatch(createSchool(formData.school)).unwrap();
-     
-      }
-
-      console.log("API Response:", result);
-
-      if (result.status === "success") {
-        toast.success(
-          isEditing
-            ? "School profile updated successfully!"
-            : "School profile created successfully!"
-        );
+      if (response.data.status === "success") {
+        toast.success("School profile created successfully!");
         router.push("/school-dashboard");
       } else {
-        throw new Error(result.message || "Operation failed");
+        throw new Error(
+          response.data.message || "Failed to create school profile"
+        );
       }
     } catch (error: any) {
       console.error("Error with school profile:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          (isEditing
-            ? "Failed to update school profile"
-            : "Failed to create school profile")
+          "Failed to create school profile"
       );
     } finally {
       setIsSubmitting(false);
@@ -373,91 +240,16 @@ export default function SchoolProfileSection() {
         </Link>
       </div>
 
-      {/* Profile Completion Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Completion</CardTitle>
+          <CardTitle>Create School Profile</CardTitle>
           <CardDescription>
-            Complete your profile to increase visibility
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Progress value={profileCompletion} className="h-2" />
-            <p className="text-sm text-gray-600">
-              {profileCompletion}% Complete
-            </p>
-            {profileCompletion < 100 && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Profile Incomplete</AlertTitle>
-                <AlertDescription>
-                  Complete all required fields to improve your school's
-                  visibility
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {isEditing ? "Edit School Profile" : "Create School Profile"}
-          </CardTitle>
-          <CardDescription>
-            {isEditing
-              ? "Update your school's information and facilities"
-              : "Create your school profile to start managing your school"}
+            Create your school profile to start managing your school
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Profile Image Upload */}
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200">
-                  {profileImage ? (
-                    <img
-                      src={URL.createObjectURL(profileImage)}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : schoolProfile?.profile_image ? (
-                    <img
-                      src={schoolProfile.profile_image}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col items-center">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileImageUpload}
-                    className="hidden"
-                    id="profile-image"
-                  />
-                  <label
-                    htmlFor="profile-image"
-                    className="cursor-pointer text-sm text-purple-600 hover:text-purple-700"
-                  >
-                    {isEditing
-                      ? "Change Profile Image"
-                      : "Upload Profile Image"}
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Recommended size: 400x400 pixels
-                  </p>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -758,10 +550,8 @@ export default function SchoolProfileSection() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? "Updating Profile..." : "Creating Profile..."}
+                    Creating Profile...
                   </>
-                ) : isEditing ? (
-                  "Update School Profile"
                 ) : (
                   "Create School Profile"
                 )}

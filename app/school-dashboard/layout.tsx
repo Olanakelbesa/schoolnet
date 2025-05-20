@@ -21,7 +21,7 @@ export default function SchoolDashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen  bg-white">
       {/* Fixed Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -39,7 +39,7 @@ export default function SchoolDashboardLayout({
         }`}
       >
         {/* Fixed Navbar */}
-        <div className="fixed top-0 right-0 z-10 w-full lg:w-[calc(100%-16rem)] transition-all duration-300">
+        <div className={`fixed w-full  z-10 ${isSidebarCollapsed ? "lg:w-[95%]" : "lg:w-[84%]"} transition-all duration-300`}>
           <Navbar
             userName="Dandi Boru Academy Admin"
             userRole="Admin"

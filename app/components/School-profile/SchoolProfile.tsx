@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useCallback } from "react"
+import { useState, useCallback } from "react";
 import {
   Building,
   Calendar,
@@ -31,44 +31,100 @@ import {
   Stethoscope,
   PencilRuler,
   Plus,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Import our components
-import { ProfileSection } from "@/app/components/School-profile/profile-section"
-import { FormField } from "@/app/components/School-profile/form-field"
-import { ProfileCompletion } from "@/app/components/School-profile/profile-completion"
-import { InputWithIcon } from "@/app/components/School-profile/input-with-icon"
-import { FacilityCheckboxList } from "@/app/components/School-profile/facility-checkbox-list"
-import { PhotoUpload } from "@/app/components/School-profile/photo-upload"
+import { ProfileSection } from "@/app/components/School-profile/profile-section";
+import { FormField } from "@/app/components/School-profile/form-field";
+import { ProfileCompletion } from "@/app/components/School-profile/profile-completion";
+import { InputWithIcon } from "@/app/components/School-profile/input-with-icon";
+import { FacilityCheckboxList } from "@/app/components/School-profile/facility-checkbox-list";
+import { PhotoUpload } from "@/app/components/School-profile/photo-upload";
+
+import axios from "axios";
 
 const facilityOptions = [
   { id: "library", label: "Library", icon: <BookOpen className="h-4 w-4" /> },
-  { id: "cafeteria", label: "Cafeteria", icon: <Utensils className="h-4 w-4" /> },
-  { id: "computerLab", label: "Computer Lab", icon: <MonitorIcon className="h-4 w-4" /> },
-  { id: "scienceLab", label: "Science Lab", icon: <Flask className="h-4 w-4" /> },
-  { id: "sportsGround", label: "Sports Ground", icon: <Trophy className="h-4 w-4" /> },
-  { id: "swimmingPool", label: "Swimming Pool", icon: <SwimmingPool className="h-4 w-4" /> },
-  { id: "gymnasium", label: "Gymnasium", icon: <Dumbbell className="h-4 w-4" /> },
-  { id: "auditorium", label: "Auditorium", icon: <Theater className="h-4 w-4" /> },
+  {
+    id: "cafeteria",
+    label: "Cafeteria",
+    icon: <Utensils className="h-4 w-4" />,
+  },
+  {
+    id: "computerLab",
+    label: "Computer Lab",
+    icon: <MonitorIcon className="h-4 w-4" />,
+  },
+  {
+    id: "scienceLab",
+    label: "Science Lab",
+    icon: <Flask className="h-4 w-4" />,
+  },
+  {
+    id: "sportsGround",
+    label: "Sports Ground",
+    icon: <Trophy className="h-4 w-4" />,
+  },
+  {
+    id: "swimmingPool",
+    label: "Swimming Pool",
+    icon: <SwimmingPool className="h-4 w-4" />,
+  },
+  {
+    id: "gymnasium",
+    label: "Gymnasium",
+    icon: <Dumbbell className="h-4 w-4" />,
+  },
+  {
+    id: "auditorium",
+    label: "Auditorium",
+    icon: <Theater className="h-4 w-4" />,
+  },
   { id: "wifi", label: "Wi-Fi", icon: <Wifi className="h-4 w-4" /> },
-  { id: "transportService", label: "Transport Service", icon: <Bus className="h-4 w-4" /> },
+  {
+    id: "transportService",
+    label: "Transport Service",
+    icon: <Bus className="h-4 w-4" />,
+  },
   { id: "musicRoom", label: "Music Room", icon: <Music className="h-4 w-4" /> },
-  { id: "artStudio", label: "Art Studio", icon: <PencilRuler className="h-4 w-4" /> },
-  { id: "infirmary", label: "Infirmary/Health Center", icon: <Stethoscope className="h-4 w-4" /> },
-  { id: "parking", label: "Parking", icon: <ParkingSquare className="h-4 w-4" /> },
-  { id: "microscopyLab", label: "Microscopy Lab", icon: <Microscope className="h-4 w-4" /> },
+  {
+    id: "artStudio",
+    label: "Art Studio",
+    icon: <PencilRuler className="h-4 w-4" />,
+  },
+  {
+    id: "infirmary",
+    label: "Infirmary/Health Center",
+    icon: <Stethoscope className="h-4 w-4" />,
+  },
+  {
+    id: "parking",
+    label: "Parking",
+    icon: <ParkingSquare className="h-4 w-4" />,
+  },
+  {
+    id: "microscopyLab",
+    label: "Microscopy Lab",
+    icon: <Microscope className="h-4 w-4" />,
+  },
   { id: "other", label: "Other", icon: <Plus className="h-4 w-4" /> },
-]
+];
 
 export default function SchoolProfile() {
-  const [activeTab, setActiveTab] = useState("basic")
+  const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState({
     // Basic Info
     schoolName: "Dandi Baru Academy",
@@ -115,21 +171,21 @@ export default function SchoolProfile() {
     },
     otherFacilities: "",
     customFacilities: ["", "", ""], // Array to store multiple custom facilities
-  })
+  });
 
   // State for facility photos
-  const [facilityPhotos, setFacilityPhotos] = useState<Array<{ url: string; file?: File }>>([
-    { url: "" },
-    { url: "" },
-    { url: "" },
-  ])
+  const [facilityPhotos, setFacilityPhotos] = useState<
+    Array<{ url: string; file?: File }>
+  >([{ url: "" }, { url: "" }, { url: "" }]);
 
-  const [customFacilityInput, setCustomFacilityInput] = useState("")
+  const [customFacilityInput, setCustomFacilityInput] = useState("");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleFacilityChange = (facilityId: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -138,45 +194,88 @@ export default function SchoolProfile() {
         ...prev.facilities,
         [facilityId]: checked,
       },
-    }))
-  }
+    }));
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleAddCustomFacility = () => {
-    if (customFacilityInput.trim() === "") return
+    if (customFacilityInput.trim() === "") return;
 
     // Add to the custom facilities array
-    const updatedCustomFacilities = [...formData.customFacilities]
+    const updatedCustomFacilities = [...formData.customFacilities];
     // Find the first empty slot or add to the end
-    const emptyIndex = updatedCustomFacilities.findIndex((item) => item === "")
+    const emptyIndex = updatedCustomFacilities.findIndex((item) => item === "");
 
     if (emptyIndex !== -1) {
-      updatedCustomFacilities[emptyIndex] = customFacilityInput
+      updatedCustomFacilities[emptyIndex] = customFacilityInput;
     } else {
-      updatedCustomFacilities.push(customFacilityInput)
+      updatedCustomFacilities.push(customFacilityInput);
     }
 
     setFormData((prev) => ({
       ...prev,
       customFacilities: updatedCustomFacilities,
-    }))
+    }));
 
     // Clear the input
-    setCustomFacilityInput("")
-  }
+    setCustomFacilityInput("");
+  };
 
   const handleRemoveCustomFacility = (index: number) => {
-    const updatedCustomFacilities = [...formData.customFacilities]
-    updatedCustomFacilities[index] = ""
+    const updatedCustomFacilities = [...formData.customFacilities];
+    updatedCustomFacilities[index] = "";
 
     setFormData((prev) => ({
       ...prev,
       customFacilities: updatedCustomFacilities,
-    }))
-  }
+    }));
+  };
+
+  const handleSubmit = async (data: any) => {
+    const formDataToSubmit = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (
+        key !== "facilities" &&
+        key !== "customFacilities" &&
+        key !== "schoolLogo"
+      ) {
+        formDataToSubmit.append(key, String(value));
+      }
+    });
+    // Append facilities and customFacilities as JSON strings
+    formDataToSubmit.append("facilities", JSON.stringify(data.facilities));
+    formDataToSubmit.append(
+      "customFacilities",
+      JSON.stringify(data.customFacilities)
+    );
+    if (data.schoolLogo) {
+      formDataToSubmit.append("schoolLogo", data.schoolLogo);
+    }
+    // Append facility photos
+    data.facilityPhotos.forEach((photo: any, index: number) => {
+      if (photo.file) {
+        formDataToSubmit.append(`facilityPhoto${index}`, photo.file);
+      }
+    });
+    console.log("form Data:", formDataToSubmit)
+
+    try {
+      const response = await axios.post(
+        "https://schoolnet-be.onrender.com/api/v1/schools",
+        formDataToSubmit,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      console.log("Success:", response.data);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   const handleSaveChanges = () => {
     // Combine all data for submission
@@ -186,96 +285,60 @@ export default function SchoolProfile() {
         url: photo.url,
         file: photo.file ? photo.file.name : null,
       })),
-    }
-
-    console.log("Saving changes:", dataToSubmit)
-
-    // Here you would typically send the data to your API
-    // For file uploads, you would use FormData
-    const formDataToSubmit = new FormData()
-
-    // Add all text fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== "facilities" && key !== "customFacilities" && key !== "schoolLogo") {
-        formDataToSubmit.append(key, String(value))
-      }
-    })
-
-    // Add facilities as JSON
-    formDataToSubmit.append("facilities", JSON.stringify(formData.facilities))
-    formDataToSubmit.append("customFacilities", JSON.stringify(formData.customFacilities))
-
-    // Add school logo if exists
-    if (formData.schoolLogo) {
-      formDataToSubmit.append("schoolLogo", formData.schoolLogo)
-    }
-
-    // Add facility photos
-    facilityPhotos.forEach((photo, index) => {
-      if (photo.file) {
-        formDataToSubmit.append(`facilityPhoto${index}`, photo.file)
-      }
-    })
-
-    // Example of how you would send this to an API
-    // const response = await fetch('/api/profile', {
-    //   method: 'POST',
-    //   body: formDataToSubmit
-    // })
-
-    // Show success message
-    alert("Profile saved successfully!")
-  }
+    };
+    console.log("Saving changes:", dataToSubmit);
+    handleSubmit(dataToSubmit);
+  };
 
   const handlePhotoUpload = useCallback((file: File, index: number) => {
     // Create a URL for the file to display as preview
-    const url = URL.createObjectURL(file)
+    const url = URL.createObjectURL(file);
 
     setFacilityPhotos((prev) => {
-      const updated = [...prev]
-      updated[index] = { url, file }
-      return updated
-    })
-  }, [])
+      const updated = [...prev];
+      updated[index] = { url, file };
+      return updated;
+    });
+  }, []);
 
   const handlePhotoRemove = useCallback((index: number) => {
     setFacilityPhotos((prev) => {
-      const updated = [...prev]
+      const updated = [...prev];
       // If there's a URL created with URL.createObjectURL, we should revoke it
       if (updated[index].url && !updated[index].url.startsWith("http")) {
-        URL.revokeObjectURL(updated[index].url)
+        URL.revokeObjectURL(updated[index].url);
       }
-      updated[index] = { url: "" }
-      return updated
-    })
-  }, [])
+      updated[index] = { url: "" };
+      return updated;
+    });
+  }, []);
 
   const handleSchoolLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/jpg"]
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(file.type)) {
-      alert("Invalid file type. Please upload JPG or PNG files only.")
-      return
+      alert("Invalid file type. Please upload JPG or PNG files only.");
+      return;
     }
 
     // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert("File size exceeds 2MB limit.")
-      return
+      alert("File size exceeds 2MB limit.");
+      return;
     }
 
     // Create a URL for the file to display as preview
-    const url = URL.createObjectURL(file)
+    const url = URL.createObjectURL(file);
 
     setFormData((prev) => ({
       ...prev,
       schoolLogo: file,
       schoolLogoUrl: url,
-    }))
-  }
+    }));
+  };
 
   const calculateCompletionPercentage = useCallback(() => {
     // Define required fields for each section
@@ -283,108 +346,156 @@ export default function SchoolProfile() {
       basic: ["schoolName"],
       contact: ["email", "phone", "streetAddress", "city", "state"],
       programs: [],
-    }
+    };
 
     // Define optional fields that contribute to completion
     const optionalFields = {
-      basic: ["yearEstablished", "type", "numberOfStudents", "feeRange", "gradeLevels", "schoolLogo"],
-      contact: ["website", "zipCode", "facebookUrl", "instagramUrl", "linkedinUrl", "twitterUrl"],
+      basic: [
+        "yearEstablished",
+        "type",
+        "numberOfStudents",
+        "feeRange",
+        "gradeLevels",
+        "schoolLogo",
+      ],
+      contact: [
+        "website",
+        "zipCode",
+        "facebookUrl",
+        "instagramUrl",
+        "linkedinUrl",
+        "twitterUrl",
+      ],
       programs: ["educationalProgram"],
-    }
+    };
 
     // Calculate completion for each section
-    const sectionWeights = { basic: 0.4, contact: 0.3, programs: 0.3 }
-    let totalCompletion = 0
+    const sectionWeights = { basic: 0.4, contact: 0.3, programs: 0.3 };
+    let totalCompletion = 0;
 
     // Calculate basic info completion
-    let basicCompleted = 0
-    const basicTotal = requiredFields.basic.length + optionalFields.basic.length
+    let basicCompleted = 0;
+    const basicTotal =
+      requiredFields.basic.length + optionalFields.basic.length;
 
     // Check required fields
     requiredFields.basic.forEach((field) => {
-      if (formData[field as keyof typeof formData]) basicCompleted++
-    })
+      if (formData[field as keyof typeof formData]) basicCompleted++;
+    });
 
     // Check optional fields
     optionalFields.basic.forEach((field) => {
       if (field === "schoolLogo" && formData.schoolLogoUrl) {
-        basicCompleted++
+        basicCompleted++;
       } else if (formData[field as keyof typeof formData]) {
-        basicCompleted++
+        basicCompleted++;
       }
-    })
+    });
 
     // Calculate contact info completion
-    let contactCompleted = 0
-    const contactTotal = requiredFields.contact.length + optionalFields.contact.length
+    let contactCompleted = 0;
+    const contactTotal =
+      requiredFields.contact.length + optionalFields.contact.length;
 
     // Check required fields
     requiredFields.contact.forEach((field) => {
-      if (formData[field as keyof typeof formData]) contactCompleted++
-    })
+      if (formData[field as keyof typeof formData]) contactCompleted++;
+    });
 
     // Check optional fields
     optionalFields.contact.forEach((field) => {
-      if (formData[field as keyof typeof formData]) contactCompleted++
-    })
+      if (formData[field as keyof typeof formData]) contactCompleted++;
+    });
 
     // Calculate programs & facilities completion
-    let programsCompleted = 0
-    const programsTotal = requiredFields.programs.length + optionalFields.programs.length + 2 // +2 for facilities and photos
+    let programsCompleted = 0;
+    const programsTotal =
+      requiredFields.programs.length + optionalFields.programs.length + 2; // +2 for facilities and photos
 
     // Check required fields
     requiredFields.programs.forEach((field) => {
-      if (formData[field as keyof typeof formData]) programsCompleted++
-    })
+      if (formData[field as keyof typeof formData]) programsCompleted++;
+    });
 
     // Check optional fields
     optionalFields.programs.forEach((field) => {
-      if (formData[field as keyof typeof formData]) programsCompleted++
-    })
+      if (formData[field as keyof typeof formData]) programsCompleted++;
+    });
 
     // Check facilities
-    const hasFacilities = Object.values(formData.facilities).some((value) => value === true)
-    if (hasFacilities) programsCompleted++
+    const hasFacilities = Object.values(formData.facilities).some(
+      (value) => value === true
+    );
+    if (hasFacilities) programsCompleted++;
 
     // Check facility photos
-    const hasPhotos = facilityPhotos.some((photo) => photo.url !== "")
-    if (hasPhotos) programsCompleted++
+    const hasPhotos = facilityPhotos.some((photo) => photo.url !== "");
+    if (hasPhotos) programsCompleted++;
 
     // Calculate weighted completion percentage
-    const basicPercentage = basicTotal > 0 ? (basicCompleted / basicTotal) * sectionWeights.basic : 0
-    const contactPercentage = contactTotal > 0 ? (contactCompleted / contactTotal) * sectionWeights.contact : 0
-    const programsPercentage = programsTotal > 0 ? (programsCompleted / programsTotal) * sectionWeights.programs : 0
+    const basicPercentage =
+      basicTotal > 0 ? (basicCompleted / basicTotal) * sectionWeights.basic : 0;
+    const contactPercentage =
+      contactTotal > 0
+        ? (contactCompleted / contactTotal) * sectionWeights.contact
+        : 0;
+    const programsPercentage =
+      programsTotal > 0
+        ? (programsCompleted / programsTotal) * sectionWeights.programs
+        : 0;
 
-    totalCompletion = (basicPercentage + contactPercentage + programsPercentage) * 100
+    totalCompletion =
+      (basicPercentage + contactPercentage + programsPercentage) * 100;
 
     // Round to nearest whole number
-    return Math.round(totalCompletion)
-  }, [formData, facilityPhotos])
+    return Math.round(totalCompletion);
+  }, [formData, facilityPhotos]);
 
   return (
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-medium text-purple-500">School Profile</h1>
+          <h1 className="text-2xl font-medium text-purple-500">
+            School Profile
+          </h1>
         </div>
 
-        <ProfileCompletion percentage={calculateCompletionPercentage()} onSave={handleSaveChanges} />
+        <ProfileCompletion
+          percentage={calculateCompletionPercentage()}
+          onSave={handleSaveChanges}
+        />
 
-        <Tabs defaultValue={activeTab} className="w-full" onValueChange={setActiveTab}>
+        <Tabs
+          defaultValue={activeTab}
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid w-full grid-cols-3 bg-purple-100 ">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger
+              value="basic"
+              className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]"
+            >
               Basic Info
             </TabsTrigger>
-            <TabsTrigger value="contact" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger
+              value="contact"
+              className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]"
+            >
               Contact Info
             </TabsTrigger>
-            <TabsTrigger value="programs" className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]">
+            <TabsTrigger
+              value="programs"
+              className="data-[state=active]:bg-[#5a3b82] data-[state=active]:text-white text-[#4c4566]"
+            >
               Programs & Facilities
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="mt-6">
-            <ProfileSection title="Basic Information" description="Provide essential information about your school.">
+            <ProfileSection
+              title="Basic Information"
+              description="Provide essential information about your school."
+            >
               <FormField label="School Name" htmlFor="schoolName" required>
                 <InputWithIcon
                   icon={<Building className="h-5 w-5" />}
@@ -407,7 +518,10 @@ export default function SchoolProfile() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField label="Type" htmlFor="type">
-                  <Select value={formData.type} onValueChange={(value) => handleSelectChange("type", value)}>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleSelectChange("type", value)}
+                  >
                     <SelectTrigger id="type" className="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -415,12 +529,17 @@ export default function SchoolProfile() {
                       <SelectItem value="Public">Public</SelectItem>
                       <SelectItem value="Private">Private</SelectItem>
                       <SelectItem value="Charter">Charter</SelectItem>
-                      <SelectItem value="International">International</SelectItem>
+                      <SelectItem value="International">
+                        International
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </FormField>
 
-                <FormField label="Number of Students" htmlFor="numberOfStudents">
+                <FormField
+                  label="Number of Students"
+                  htmlFor="numberOfStudents"
+                >
                   <Input
                     id="numberOfStudents"
                     name="numberOfStudents"
@@ -431,7 +550,12 @@ export default function SchoolProfile() {
               </div>
 
               <FormField label="Fee Range" htmlFor="feeRange">
-                <Select value={formData.feeRange} onValueChange={(value) => handleSelectChange("feeRange", value)}>
+                <Select
+                  value={formData.feeRange}
+                  onValueChange={(value) =>
+                    handleSelectChange("feeRange", value)
+                  }
+                >
                   <SelectTrigger id="feeRange" className="w-full">
                     <SelectValue placeholder="Select fee range" />
                   </SelectTrigger>
@@ -445,17 +569,25 @@ export default function SchoolProfile() {
                 </Select>
               </FormField>
 
-              <FormField label="Grade Levels Offered" htmlFor="gradeLevels" description="Select all that apply">
+              <FormField
+                label="Grade Levels Offered"
+                htmlFor="gradeLevels"
+                description="Select all that apply"
+              >
                 <Select
                   value={formData.gradeLevels}
-                  onValueChange={(value) => handleSelectChange("gradeLevels", value)}
+                  onValueChange={(value) =>
+                    handleSelectChange("gradeLevels", value)
+                  }
                 >
                   <SelectTrigger id="gradeLevels" className="w-full">
                     <SelectValue placeholder="Select grade levels" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="KG">Kindergarten</SelectItem>
-                    <SelectItem value="Elementary">Elementary School</SelectItem>
+                    <SelectItem value="Elementary">
+                      Elementary School
+                    </SelectItem>
                     <SelectItem value="Middle">Middle School</SelectItem>
                     <SelectItem value="High">High School</SelectItem>
                   </SelectContent>
@@ -512,7 +644,11 @@ export default function SchoolProfile() {
                       onChange={handleSchoolLogoUpload}
                     />
                     <label htmlFor="schoolLogo">
-                      <Button variant="outline" className="flex items-center gap-2 text-purple-600" asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 text-purple-600"
+                        asChild
+                      >
                         <span>
                           <Upload className="h-4 w-4" />
                           Upload Logo
@@ -526,7 +662,10 @@ export default function SchoolProfile() {
           </TabsContent>
 
           <TabsContent value="contact" className="mt-6">
-            <ProfileSection title="Contact Information" description="How parents and students reach your school.">
+            <ProfileSection
+              title="Contact Information"
+              description="How parents and students reach your school."
+            >
               <FormField label="Email Address" htmlFor="email" required>
                 <InputWithIcon
                   icon={<Mail className="h-5 w-5" />}
@@ -563,7 +702,11 @@ export default function SchoolProfile() {
                 />
               </FormField>
 
-              <FormField label="Street Address" htmlFor="streetAddress" required>
+              <FormField
+                label="Street Address"
+                htmlFor="streetAddress"
+                required
+              >
                 <InputWithIcon
                   icon={<MapPin className="h-5 w-5" />}
                   id="streetAddress"
@@ -653,8 +796,14 @@ export default function SchoolProfile() {
           </TabsContent>
 
           <TabsContent value="programs" className="mt-6">
-            <ProfileSection title="Programs & Facilities" description="Highlight what makes your school special.">
-              <FormField label="Educational Program" htmlFor="educationalProgram">
+            <ProfileSection
+              title="Programs & Facilities"
+              description="Highlight what makes your school special."
+            >
+              <FormField
+                label="Educational Program"
+                htmlFor="educationalProgram"
+              >
                 <Textarea
                   id="educationalProgram"
                   name="educationalProgram"
@@ -665,7 +814,11 @@ export default function SchoolProfile() {
                 />
               </FormField>
 
-              <FormField label="Facilities" htmlFor="facilities" description="Select all that apply">
+              <FormField
+                label="Facilities"
+                htmlFor="facilities"
+                description="Select all that apply"
+              >
                 <FacilityCheckboxList
                   facilities={facilityOptions.filter((f) => f.id !== "other")}
                   selectedFacilities={formData.facilities}
@@ -677,7 +830,9 @@ export default function SchoolProfile() {
                   <Checkbox
                     id="other"
                     checked={formData.facilities.other || false}
-                    onCheckedChange={(checked) => handleFacilityChange("other", checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      handleFacilityChange("other", checked as boolean)
+                    }
                     className="data-[state=checked]:bg-purple-600 data-[state=checked]:text-white"
                   />
                   <label
@@ -699,7 +854,9 @@ export default function SchoolProfile() {
                         <Input
                           placeholder="Enter custom facility"
                           value={customFacilityInput}
-                          onChange={(e) => setCustomFacilityInput(e.target.value)}
+                          onChange={(e) =>
+                            setCustomFacilityInput(e.target.value)
+                          }
                         />
                       </div>
                       <Button
@@ -712,9 +869,13 @@ export default function SchoolProfile() {
                     </div>
 
                     {/* Display added custom facilities */}
-                    {formData.customFacilities.some((facility) => facility !== "") && (
+                    {formData.customFacilities.some(
+                      (facility) => facility !== ""
+                    ) && (
                       <div className="rounded-md border border-gray-200 p-3">
-                        <h4 className="mb-2 text-sm font-medium text-gray-700">Added Custom Facilities:</h4>
+                        <h4 className="mb-2 text-sm font-medium text-gray-700">
+                          Added Custom Facilities:
+                        </h4>
                         <div className="space-y-2">
                           {formData.customFacilities.map(
                             (facility, index) =>
@@ -727,7 +888,9 @@ export default function SchoolProfile() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleRemoveCustomFacility(index)}
+                                    onClick={() =>
+                                      handleRemoveCustomFacility(index)
+                                    }
                                     className="h-7 w-7 p-0 text-gray-500 hover:bg-purple-100 hover:text-red-600"
                                   >
                                     <span className="sr-only">Remove</span>
@@ -739,11 +902,15 @@ export default function SchoolProfile() {
                                       stroke="currentColor"
                                       className="h-4 w-4"
                                     >
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
                                     </svg>
                                   </Button>
                                 </div>
-                              ),
+                              )
                           )}
                         </div>
                       </div>
@@ -752,11 +919,15 @@ export default function SchoolProfile() {
                 )}
               </FormField>
 
-              <PhotoUpload photos={facilityPhotos} onUpload={handlePhotoUpload} onRemove={handlePhotoRemove} />
+              <PhotoUpload
+                photos={facilityPhotos}
+                onUpload={handlePhotoUpload}
+                onRemove={handlePhotoRemove}
+              />
             </ProfileSection>
           </TabsContent>
         </Tabs>
       </div>
     </>
-  )
+  );
 }
