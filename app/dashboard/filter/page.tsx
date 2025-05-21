@@ -26,10 +26,10 @@ const priceRanges = {
 
 const filterOptions: Record<string, string[]> = {
   Price: ["<5,000 ETB", "5,000-10,000 ETB", "10,000-20,000 ETB", ">20,000 ETB"],
-  "Grade Level": ["KG", "Middle school", "Primary", "High school"],
+  "Grade Level": ["KG", "Primary", "Middle", "High school"],
   Review: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
   Language: ["Amharic", "French", "English", "Mixed"],
-  "School type": ["Public", "Private", "International"],
+  "School type": ["Private", "Public", "International"],
   Gender: ["Male", "Female", "Co-Ed"],
   "School Format": ["Day School", "Night School", "Boarding School", "Either"],
   Location: [
@@ -48,26 +48,30 @@ const filterOptions: Record<string, string[]> = {
 };
 
 const filterRows = [
-  "Price",
+  "Location",
+  "School type",
   "Grade Level",
+  "Price",
   "Review",
   "Language",
-  "School type",
   "Gender",
   "School Format",
-  "Location",
 ];
 
 interface FilterParams {
-  address: {
-    city: string;
-    subCity: string;
-  };
-  budgetMin: number;
-  budgetMax: number;
-  schoolType: string[];
-  googleRatings: number;
-  gender: string;
+  address: [
+    {
+      subCity: string;
+    }
+  ];
+  budgetMin?: number;
+  budgetMax?: number;
+  schoolType?: string[];
+  gradeLevel?: string[];
+  review?: number;
+  language?: string[];
+  gender?: string[];
+  schoolFormat?: string[];
 }
 
 export default function FilterPage() {
@@ -92,15 +96,11 @@ export default function FilterPage() {
       setError(null);
 
       const filterParams: FilterParams = {
-        address: {
-          city: "Addis Ababa",
-          subCity: selectedOptions["Location"] || "",
-        },
-        budgetMin: 0,
-        budgetMax: 0,
-        schoolType: [],
-        googleRatings: 0,
-        gender: "",
+        address: [
+          {
+            subCity: selectedOptions["Location"] || "",
+          },
+        ],
       };
 
       // Handle price range
@@ -116,30 +116,45 @@ export default function FilterPage() {
         filterParams.schoolType = [selectedOptions["School type"] as string];
       }
 
-      // Handle review/rating
+      // Handle grade level
+      if (selectedOptions["Grade Level"]) {
+        filterParams.gradeLevel = [selectedOptions["Grade Level"] as string];
+      }
+
+      // Handle review
       if (selectedOptions["Review"]) {
-        const rating = parseInt(selectedOptions["Review"].split(" ")[0]);
-        filterParams.googleRatings = rating;
+        const reviewStars = parseInt(selectedOptions["Review"].split(" ")[0]);
+        filterParams.review = reviewStars;
+      }
+
+      // Handle language
+      if (selectedOptions["Language"]) {
+        filterParams.language = [selectedOptions["Language"] as string];
       }
 
       // Handle gender
       if (selectedOptions["Gender"]) {
-        filterParams.gender = selectedOptions["Gender"];
+        filterParams.gender = [selectedOptions["Gender"] as string];
       }
 
-      // Validate required fields
-      if (!filterParams.address.subCity) {
+      // Handle school format
+      if (selectedOptions["School Format"]) {
+        filterParams.schoolFormat = [
+          selectedOptions["School Format"] as string,
+        ];
+      }
+
+      // Validate only address
+      if (!filterParams.address[0].subCity) {
         throw new Error("Please select a location");
       }
-      if (filterParams.schoolType.length === 0) {
-        throw new Error("Please select a school type");
-      }
-      console.log("filter data:" , filterParams)
+
+      console.log("filter data:", filterParams);
 
       const result = await dispatch(filterSchools(filterParams)).unwrap();
-      console.log("filter result:", result)
+      console.log("filter result:", result);
 
-      if (result.data && result.data.length > 0) {
+      if (result.data && result.data.school && result.data.school.length > 0) {
         router.push("/dashboard/filter-result");
       } else {
         setError("No schools found matching your criteria");

@@ -50,11 +50,14 @@ export default function SearchResultsContent() {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredSchools.length / itemsPerPage);
-  const paginatedSchools = filteredSchools.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const totalPages = Math.ceil(
+    (filteredSchools?.data?.school?.length || 0) / itemsPerPage
   );
+  const paginatedSchools =
+    filteredSchools?.data?.school?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    ) || [];
 
   if (loading) {
     return (
@@ -90,7 +93,8 @@ export default function SearchResultsContent() {
           Search Results for "{query}"
         </h1>
         <p className="text-gray-600">
-          Found {filteredSchools.length} schools matching your search
+          Found {filteredSchools?.data?.school?.length || 0} schools matching
+          your search
         </p>
       </div>
 
@@ -184,7 +188,8 @@ export default function SearchResultsContent() {
       </div>
 
       {/* No Results */}
-      {filteredSchools.length === 0 && (
+      {(!filteredSchools?.data?.school ||
+        filteredSchools.data.school.length === 0) && (
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No schools found

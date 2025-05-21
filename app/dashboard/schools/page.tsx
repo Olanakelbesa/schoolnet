@@ -66,10 +66,17 @@ export default function SchoolsPage() {
       }
     };
 
+    // Always fetch schools when the page loads
     fetchSchools();
     dispatch(loadFavorites());
   }, [dispatch]);
 
+  console.log("Current state:", {
+    loading,
+    hasFilteredSchools: !!filteredSchools?.data?.school,
+    filteredSchoolsLength: filteredSchools?.data?.school?.length,
+    schoolsLength: schools?.length,
+  });
 
   const handleTypeChange = (type: string) => {
     console.log("Setting school type:", type);
@@ -85,13 +92,7 @@ export default function SchoolsPage() {
     dispatch(setPage(page));
   };
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredSchools.length / itemsPerPage);
-  const paginatedSchools = filteredSchools.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
+  // Show loading state only while actively fetching
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -118,6 +119,16 @@ export default function SchoolsPage() {
     );
   }
 
+  // Calculate pagination
+  const totalPages = Math.ceil(
+    (filteredSchools?.data?.school?.length || 0) / itemsPerPage
+  );
+  const paginatedSchools =
+    filteredSchools?.data?.school?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    ) || [];
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -128,7 +139,6 @@ export default function SchoolsPage() {
 
       {/* Search and Filter */}
       <div className="flex flex-col gap-4 mb-8">
-
         {/* Categories */}
         <div className="space-y-4">
           {/* School Types */}
@@ -192,13 +202,12 @@ export default function SchoolsPage() {
               ))}
             </div>
           </div>
-        
         </div>
       </div>
 
       {/* Schools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginatedSchools.map((school: School) => (
+        {paginatedSchools?.map((school: School) => (
           <div key={school._id} className="group relative">
             <Link href={`/dashboard/school-details/${school._id}`}>
               <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
@@ -272,24 +281,6 @@ export default function SchoolsPage() {
           </div>
         ))}
       </div>
-
-      {/* No Results */}
-      {filteredSchools.length === 0 && (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No schools found
-          </h3>
-          <p className="text-gray-600">
-            Try adjusting your search or filter criteria
-          </p>
-          <Button
-            onClick={() => dispatch(clearCategoryFilters())}
-            className="mt-4"
-          >
-            Clear Filters
-          </Button>
-        </div>
-      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

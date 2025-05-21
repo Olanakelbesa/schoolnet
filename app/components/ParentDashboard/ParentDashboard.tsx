@@ -158,19 +158,19 @@ export default function ParentDashboard() {
     imageUrl: school.images?.[0] || "/images/placeholder.svg",
   });
 
-  // Get nearby schools (top 3) - using filtered schools which already has both type and location filters
+  // Get nearby schools - using filtered schools which already has both type and location filters
   const getNearbySchools = () => {
     console.log("Getting nearby schools:", {
       filteredSchools,
-      isArray: Array.isArray(filteredSchools),
-      length: filteredSchools?.length,
+      isArray: Array.isArray(filteredSchools?.data?.school),
+      length: filteredSchools?.data?.school?.length,
     });
 
-    if (!Array.isArray(filteredSchools)) {
+    if (!Array.isArray(filteredSchools?.data?.school)) {
       console.log("filteredSchools is not an array");
       return [];
     }
-    return filteredSchools.slice(0, 3);
+    return filteredSchools.data.school;
   };
 
   // Get schools by subcity - using only location filter

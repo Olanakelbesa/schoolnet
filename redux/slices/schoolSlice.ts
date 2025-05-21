@@ -40,7 +40,11 @@ export interface School {
 
 export interface SchoolState {
   schools: School[];
-  filteredSchools: School[];
+  filteredSchools: {
+    data: {
+      school: School[];
+    };
+  };
   selectedSchool: School | null;
   loading: boolean;
   error: string | null;
@@ -70,7 +74,11 @@ export interface SchoolState {
 // Initial state
 const initialState: SchoolState = {
   schools: [],
-  filteredSchools: [],
+  filteredSchools: {
+    data: {
+      school: []
+    }
+  },
   selectedSchool: null,
   loading: false,
   error: null,
@@ -103,17 +111,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Add request interceptor to include token
-// api.interceptors.request.use((config) => {
-//   const token = localStorage.getItem('token');
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   config.headers['Access-Control-Allow-Origin'] = '*';
-//   config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
-//   config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-//   return config;
-// });
 
 // Add response interceptor for error handling
 api.interceptors.response.use(
@@ -183,12 +180,10 @@ export const fetchSchoolById = createAsyncThunk(
       return { data: response.data.data.school };
     } catch (error: any) {
       console.error('Error fetching school:', error);
-      console.log('Using mock data instead');
-      const mockSchool = mockSchools.find(school => school._id === id);
-      if (!mockSchool) {
+      if (error.response?.status === 404) {
         return rejectWithValue('School not found');
       }
-      return { data: mockSchool };
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch school');
     }
   }
 );
@@ -197,18 +192,21 @@ export const fetchSchoolById = createAsyncThunk(
 export const filterSchools = createAsyncThunk(
   'schools/filter',
   async (filterParams: {
-    address: {
-      city: string;
+    address: [{
       subCity: string;
-    };
-    budgetMin: number;
-    budgetMax: number;
-    schoolType: string[];
-    googleRatings: number;
-    gender: string;
+    }];
+    budgetMin?: number;
+    budgetMax?: number;
+    schoolType?: string[];
+    gradeLevel?: string[];
+    review?: number;
+    language?: string[];
+    gender?: string[];
+    schoolFormat?: string[];
   }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/schools/filter', filterParams);
+      console.log("sending filter data:", filterParams)
+      const response = await api.post('/schools/filter', filterParams, {withCredentials:true});
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to filter schools');
@@ -407,7 +405,7 @@ function applyFilters(state: SchoolState) {
     totalSchools: state.schools.length
   });
 
-  state.filteredSchools = filtered;
+  state.filteredSchools = { data: { school: filtered } };
   state.totalResults = filtered.length;
 }
 
@@ -459,7 +457,7 @@ const schoolSlice = createSlice({
     setSortBy: (state, action: PayloadAction<{ field: 'name' | 'subCity' | 'schoolTags' | 'budgetMin' | 'budgetMax'; direction: 'asc' | 'desc' }>) => {
       state.sortBy = action.payload;
       state.schools = sortSchools(state.schools, action.payload.field, action.payload.direction);
-      state.filteredSchools = sortSchools(state.filteredSchools, action.payload.field, action.payload.direction);
+      state.filteredSchools = { data: { school: sortSchools(state.filteredSchools.data.school, action.payload.field, action.payload.direction) } };
     },
     loadFavorites: (state) => {
       const savedFavorites = localStorage.getItem('favoriteSchools');
@@ -531,14 +529,14 @@ const schoolSlice = createSlice({
       })
       .addCase(filterSchools.fulfilled, (state, action) => {
         state.loading = false;
-        state.filteredSchools = action.payload.data || [];
-        state.totalResults = action.payload.data?.length || 0;
+        state.filteredSchools = action.payload;
+        state.totalResults = action.payload.data?.school?.length || 0;
         state.error = null;
       })
       .addCase(filterSchools.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || 'Failed to filter schools';
-        state.filteredSchools = [];
+        state.filteredSchools = { data: { school: [] } };
       })
       .addCase(createSchool.pending, (state) => {
         state.loading = true;
@@ -547,7 +545,7 @@ const schoolSlice = createSlice({
       .addCase(createSchool.fulfilled, (state, action) => {
         state.loading = false;
         state.schools.push(action.payload.data.school);
-        state.filteredSchools = state.schools;
+        state.filteredSchools = { data: { school: [action.payload.data.school] } };
       })
       .addCase(createSchool.rejected, (state, action) => {
         state.loading = false;
@@ -562,7 +560,7 @@ const schoolSlice = createSlice({
         state.schools = state.schools.map(school =>
           school._id === action.payload.data.school._id ? action.payload.data.school : school
         );
-        state.filteredSchools = state.schools;
+        state.filteredSchools = { data: { school: [action.payload.data.school] } };
       })
       .addCase(updateSchool.rejected, (state, action) => {
         state.loading = false;
